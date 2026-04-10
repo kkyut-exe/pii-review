@@ -14,6 +14,7 @@ export default function ListPage() {
   const navigate = useNavigate()
 
   const pendingCount = records.filter(r => r.status === 'pending').length
+  const reviewingCount = records.filter(r => r.status === 'reviewing').length
   const reviewedCount = records.filter(r => r.status === 'reviewed').length
   const filtered = records.filter(r => filter === 'all' || r.status === filter)
 
@@ -43,6 +44,7 @@ export default function ListPage() {
           <div className="space-y-1">
             {files.map(file => {
               const filePending = file.records.filter(r => r.status === 'pending').length
+              const fileReviewing = file.records.filter(r => r.status === 'reviewing').length
               const fileReviewed = file.records.filter(r => r.status === 'reviewed').length
               const isActive = file.id === activeFileId
               return (
@@ -59,6 +61,7 @@ export default function ListPage() {
                   </div>
                   <div className="flex items-center gap-2 text-xs pl-0.5">
                     <span className="text-orange-500">● {filePending}</span>
+                    {fileReviewing > 0 && <span className="text-blue-500">● {fileReviewing}</span>}
                     <span className="text-green-500">✓ {fileReviewed}</span>
                   </div>
                 </button>
@@ -73,6 +76,7 @@ export default function ListPage() {
             {[
               { key: 'all', label: '전체', count: records.length },
               { key: 'pending', label: '미검수', count: pendingCount },
+              { key: 'reviewing', label: '검수중', count: reviewingCount },
               { key: 'reviewed', label: '검수완료', count: reviewedCount },
             ].map(({ key, label, count }) => (
               <button
@@ -114,6 +118,7 @@ export default function ListPage() {
             <div className="flex items-center gap-4 text-sm text-gray-400">
               <span>전체 {records.length}건</span>
               <span className="text-orange-500">● 미검수 {pendingCount}</span>
+              {reviewingCount > 0 && <span className="text-blue-500">● 검수중 {reviewingCount}</span>}
               <span className="text-green-500">✓ 검수완료 {reviewedCount}</span>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { PII_CATEGORIES } from '../context/FileContext'
 
 const CATEGORY_COLORS = {
   NAME:      'bg-yellow-200 text-yellow-900',
@@ -12,12 +13,19 @@ const CATEGORY_COLORS = {
   AGE:       'bg-indigo-200 text-indigo-900',
 }
 
-export default function TextViewer({ text, piiDict }) {
+const CATEGORY_LABELS = {
+  NAME: '이름', ADDRESS: '주소', POSTAL: '우편번호', RESIDENT: '주민등록번호',
+  CONTACT: '연락처', EMAIL: '이메일', BIRTHDATE: '생년월일', GENDER: '성별', AGE: '나이',
+}
+
+export default function TextViewer({ text, piiDict, onAddPii }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [matchIndex, setMatchIndex] = useState(0)
+  const [selectionPopup, setSelectionPopup] = useState(null) // { text, x, y }
   const containerRef = useRef(null)
   const searchInputRef = useRef(null)
+  const popupRef = useRef(null)
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -26,14 +34,50 @@ export default function TextViewer({ text, piiDict }) {
         setSearchOpen(true)
         setTimeout(() => searchInputRef.current?.focus(), 0)
       }
-      if (e.key === 'Escape' && searchOpen) {
-        setSearchOpen(false)
-        setSearchQuery('')
+      if (e.key === 'Escape') {
+        if (selectionPopup) { setSelectionPopup(null); return }
+        if (searchOpen) { setSearchOpen(false); setSearchQuery('') }
       }
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [searchOpen])
+  }, [searchOpen, selectionPopup])
+
+  // Close popup on outside mousedown
+  useEffect(() => {
+    if (!selectionPopup) return
+    function onMouseDown(e) {
+      if (!popupRef.current?.contains(e.target)) {
+        setSelectionPopup(null)
+      }
+    }
+    document.addEventListener('mousedown', onMouseDown)
+    return () => document.removeEventListener('mousedown', onMouseDown)
+  }, [selectionPopup])
+
+  function handleMouseUp() {
+    if (!onAddPii) return
+    // Defer so selection is finalized
+    setTimeout(() => {
+      const selection = window.getSelection()
+      const selected = selection?.toString().trim()
+      if (!selected || selection.rangeCount === 0) return
+      const range = selection.getRangeAt(0)
+      const rect = range.getBoundingClientRect()
+      setSelectionPopup({
+        text: selected,
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      })
+    }, 0)
+  }
+
+  function handleAddPii(category) {
+    if (!selectionPopup) return
+    onAddPii(category, selectionPopup.text)
+    setSelectionPopup(null)
+    window.getSelection()?.removeAllRanges()
+  }
 
   const segments = buildSegments(text, piiDict, searchQuery)
   const totalMatches = searchQuery
@@ -79,8 +123,8 @@ export default function TextViewer({ text, piiDict }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
-        <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-mono">
+      <div className="flex-1 overflow-y-auto px-6 pb-6" onMouseUp={handleMouseUp}>
+        <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-mono select-text">
           {segments.map((seg, i) => {
             if (seg.type === 'text') return <span key={i}>{seg.value}</span>
             if (seg.type === 'pii') {
@@ -100,6 +144,37 @@ export default function TextViewer({ text, piiDict }) {
           })}
         </div>
       </div>
+
+      {/* 드래그 선택 팝업 */}
+      {selectionPopup && (
+        <div
+          ref={popupRef}
+          style={{
+            position: 'fixed',
+            left: selectionPopup.x,
+            top: selectionPopup.y - 8,
+            transform: 'translate(-50%, -100%)',
+            zIndex: 50,
+          }}
+          className="bg-white border border-gray-200 rounded-xl shadow-lg p-2 min-w-[220px]"
+        >
+          <div className="text-xs text-gray-400 mb-1.5 px-1 truncate max-w-[240px]">
+            &ldquo;{selectionPopup.text}&rdquo;
+          </div>
+          <div className="grid grid-cols-3 gap-1">
+            {PII_CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                onMouseDown={e => { e.preventDefault(); handleAddPii(cat) }}
+                className={`text-xs rounded-full px-2 py-1 font-medium hover:opacity-80 transition-opacity ${CATEGORY_COLORS[cat]}`}
+              >
+                {cat}
+                <span className="ml-1 opacity-60 font-normal">{CATEGORY_LABELS[cat]}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

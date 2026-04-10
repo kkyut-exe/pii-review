@@ -1,0 +1,159 @@
+[
+  {
+    "id": "doc_001",
+    "source_filename": "report_001.txt",
+    "status": "reviewed",
+    "reviewed_at": "2026-04-10T11:53:09.341Z",
+    "reviewed_pii_dict": {
+      "NAME": [
+        "홍길동"
+      ],
+      "ADDRESS": [
+        "서울특별시 강남구 테헤란로 123번길 45"
+      ],
+      "POSTAL": [
+        "06234"
+      ],
+      "RESIDENT": [
+        "800101-1234567"
+      ],
+      "CONTACT": [
+        "010-1234-5678"
+      ],
+      "EMAIL": [
+        "hong@example.com"
+      ],
+      "BIRTHDATE": [
+        "1980년 1월 1일"
+      ],
+      "GENDER": [
+        "남성"
+      ],
+      "AGE": [
+        "44세"
+      ]
+    },
+    "doc_text": "홍길동 씨는 서울특별시 강남구 테헤란로 123번길 45에 거주하고 있으며, 주민등록번호는 800101-1234567입니다.\n연락처는 010-1234-5678이고 이메일은 hong@example.com입니다.\n생년월일은 1980년 1월 1일이며 성별은 남성, 나이는 44세입니다.\n우편번호는 06234입니다.",
+    "pii_dict": {
+      "NAME": [
+        "홍길동"
+      ],
+      "ADDRESS": [
+        "서울특별시 강남구 테헤란로 123번길 45"
+      ],
+      "POSTAL": [
+        "06234"
+      ],
+      "RESIDENT": [
+        "800101-1234567"
+      ],
+      "CONTACT": [
+        "010-1234-5678"
+      ],
+      "EMAIL": [
+        "hong@example.com"
+      ],
+      "BIRTHDATE": [
+        "1980년 1월 1일"
+      ],
+      "GENDER": [
+        "남성"
+      ],
+      "AGE": [
+        "44세"
+      ]
+    }
+  },
+  {
+    "id": "doc_002",
+    "source_filename": "report_002.txt",
+    "status": "reviewed",
+    "reviewed_at": "2026-04-10T11:53:18.043Z",
+    "reviewed_pii_dict": {
+      "NAME": [
+        "김영희"
+      ],
+      "ADDRESS": [
+        "부산광역시 해운대구 센텀중앙로 55"
+      ],
+      "POSTAL": [
+        "48058"
+      ],
+      "RESIDENT": [
+        "890315-2345678"
+      ],
+      "CONTACT": [
+        "010-9876-5432"
+      ],
+      "EMAIL": [
+        "kim.yh@mail.co.kr"
+      ],
+      "BIRTHDATE": [],
+      "GENDER": [
+        "여"
+      ],
+      "AGE": [
+        "35세"
+      ]
+    },
+    "doc_text": "환자 김영희(여, 35세)의 주소는 부산광역시 해운대구 센텀중앙로 55이며,\n연락처 010-9876-5432, 이메일 kim.yh@mail.co.kr로 연락 가능합니다.\n주민번호 890315-2345678, 우편번호 48058.",
+    "pii_dict": {
+      "NAME": [
+        "김영희"
+      ],
+      "ADDRESS": [
+        "부산광역시 해운대구 센텀중앙로 55"
+      ],
+      "POSTAL": [
+        "48058"
+      ],
+      "RESIDENT": [
+        "890315-2345678"
+      ],
+      "CONTACT": [
+        "010-9876-5432"
+      ],
+      "EMAIL": [
+        "kim.yh@mail.co.kr"
+      ],
+      "BIRTHDATE": [],
+      "GENDER": [
+        "여"
+      ],
+      "AGE": [
+        "35세"
+      ]
+    }
+  },
+  {
+    "id": "doc_003",
+    "source_filename": "report_003.txt",
+    "status": "pending",
+    "reviewed_at": null,
+    "reviewed_pii_dict": null,
+    "doc_text": "이철수 님의 개인정보 처리 동의서입니다.\n주소: 경기도 성남시 분당구 판교역로 235\n생년월일: 1975.06.22\n나이: 49세\n우편번호: 13494\n전화: 031-555-7890",
+    "pii_dict": {
+      "NAME": [
+        "이철수"
+      ],
+      "ADDRESS": [
+        "경기도 성남시 분당구 판교역로 235"
+      ],
+      "POSTAL": [
+        "13494"
+      ],
+      "RESIDENT": [],
+      "CONTACT": [
+        "031-555-7890"
+      ],
+      "EMAIL": [],
+      "BIRTHDATE": [
+        "1975.06.22"
+      ],
+      "GENDER": [],
+      "AGE": [
+        "49세"
+      ]
+    }
+  }
+]

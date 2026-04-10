@@ -7,7 +7,7 @@ import TextViewer from '../components/TextViewer'
 
 export default function ReviewPage() {
   const { id } = useParams()
-  const { records, saveReview } = useFile()
+  const { records, saveReview, setRecordStatus } = useFile()
   const navigate = useNavigate()
 
   const currentIndex = records.findIndex(r => r.id === id)
@@ -20,6 +20,9 @@ export default function ReviewPage() {
   useEffect(() => {
     if (record) {
       setPiiDict(record.reviewed_pii_dict ?? record.pii_dict)
+      if (record.status === 'pending') {
+        setRecordStatus(record.id, 'reviewing').catch(() => {})
+      }
     }
   }, [record?.id])
 
@@ -31,7 +34,7 @@ export default function ReviewPage() {
       setSavedMsg(true)
       setTimeout(() => setSavedMsg(false), 2500)
     } catch (err) {
-      alert(`저장 실패: ${err.message}`)
+      if (err.name !== 'NotAllowedError') alert(`저장 실패: ${err.message}`)
     } finally {
       setSaving(false)
     }
@@ -97,6 +100,14 @@ export default function ReviewPage() {
           <span className="text-gray-200">|</span>
 
           {savedMsg && <span className="text-xs text-green-500 font-medium">저장됨 ✓</span>}
+          {record.status === 'reviewed' && (
+            <button
+              onClick={() => setRecordStatus(record.id, 'reviewing').catch(() => {})}
+              className="text-sm text-blue-500 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              검수중으로 변경
+            </button>
+          )}
           <button
             onClick={handleSave}
             disabled={saving}
@@ -108,21 +119,29 @@ export default function ReviewPage() {
         </div>
       </header>
 
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <div className="h-[40%] border-b border-gray-100 flex flex-col overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
+        {/* 좌: 원문 텍스트 */}
+        <div className="w-1/2 border-r border-gray-100 flex flex-col overflow-hidden">
           <div className="px-6 pt-4 pb-2 shrink-0 flex items-center gap-2">
             <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">원문 텍스트</h2>
             <span className="text-xs text-gray-300">— Ctrl+F로 검색</span>
           </div>
-          <TextViewer text={record.doc_text} piiDict={piiDict} />
+          <TextViewer
+            text={record.doc_text}
+            piiDict={piiDict}
+            onAddPii={(category, value) =>
+              setPiiDict(prev => ({ ...prev, [category]: [...(prev[category] ?? []), value] }))
+            }
+          />
         </div>
 
-        <div className="flex-1 flex flex-col overflow-hidden">
+        {/* 우: PII 검수 */}
+        <div className="w-1/2 flex flex-col overflow-hidden">
           <div className="px-6 pt-4 pb-2 shrink-0">
             <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">PII 검수</h2>
           </div>
           <div className="flex-1 overflow-y-auto px-6 pb-6">
-            <PiiEditor piiDict={piiDict} onChange={setPiiDict} />
+            <PiiEditor piiDict={piiDict} onChange={setPiiDict} docText={record.doc_text} />
           </div>
         </div>
       </div>

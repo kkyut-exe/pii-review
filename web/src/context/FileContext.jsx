@@ -48,6 +48,18 @@ export function FileProvider({ children }) {
     }
   }
 
+  async function setRecordStatus(id, status) {
+    const updated = records.map(r => r.id === id ? { ...r, status } : r)
+    setFiles(prev =>
+      prev.map(f => f.id === activeFileId ? { ...f, records: updated } : f)
+    )
+    try {
+      await _writeToFile(activeFile.handle, updated)
+    } catch (err) {
+      if (err.name !== 'NotAllowedError') throw err
+    }
+  }
+
   async function saveReview(id, reviewedPiiDict) {
     const updated = records.map(r =>
       r.id === id
@@ -107,6 +119,7 @@ export function FileProvider({ children }) {
         fileName,
         openFile,
         addFile,
+        setRecordStatus,
         saveReview,
         exportReviewed,
       }}

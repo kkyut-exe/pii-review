@@ -7,10 +7,19 @@ const CATEGORY_LABELS = {
   CONTACT: '연락처', EMAIL: '이메일', BIRTHDATE: '생년월일', GENDER: '성별', AGE: '나이',
 }
 
-const ROW1 = PII_CATEGORIES.slice(0, 5)
-const ROW2 = PII_CATEGORIES.slice(5)
+const CATEGORY_COLORS = {
+  NAME:      'bg-yellow-200 text-yellow-900',
+  ADDRESS:   'bg-blue-200 text-blue-900',
+  POSTAL:    'bg-purple-200 text-purple-900',
+  RESIDENT:  'bg-red-200 text-red-900',
+  CONTACT:   'bg-green-200 text-green-900',
+  EMAIL:     'bg-pink-200 text-pink-900',
+  BIRTHDATE: 'bg-orange-200 text-orange-900',
+  GENDER:    'bg-teal-200 text-teal-900',
+  AGE:       'bg-indigo-200 text-indigo-900',
+}
 
-export default function PiiEditor({ piiDict, onChange }) {
+export default function PiiEditor({ piiDict, onChange, docText }) {
   const [addingTo, setAddingTo] = useState(null)
   const [newValue, setNewValue] = useState('')
   const [dragItem, setDragItem] = useState(null)
@@ -19,6 +28,14 @@ export default function PiiEditor({ piiDict, onChange }) {
   function handleAdd(category) {
     const trimmed = newValue.trim()
     if (trimmed) {
+      if (docText && !docText.includes(trimmed)) {
+        const ok = window.confirm(`"${trimmed}"이(가) 원문 텍스트에 없습니다. 그래도 추가하시겠습니까?`)
+        if (!ok) {
+          setNewValue('')
+          setAddingTo(null)
+          return
+        }
+      }
       onChange({ ...piiDict, [category]: [...(piiDict[category] ?? []), trimmed] })
     }
     setNewValue('')
@@ -67,7 +84,7 @@ export default function PiiEditor({ piiDict, onChange }) {
         }`}
       >
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+          <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${CATEGORY_COLORS[category]}`}>
             {category}
           </span>
           <span className="text-xs text-gray-400">{CATEGORY_LABELS[category]}</span>
@@ -90,44 +107,45 @@ export default function PiiEditor({ piiDict, onChange }) {
             />
           ))}
 
-          {addingTo === category ? (
-            <input
-              autoFocus
-              value={newValue}
-              onChange={e => setNewValue(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handleAdd(category)
-                if (e.key === 'Escape') setAddingTo(null)
-              }}
-              onBlur={() => handleAdd(category)}
-              placeholder="입력 후 Enter"
-              className="text-sm border border-blue-300 rounded-md px-2 py-0.5 outline-none focus:ring-1 focus:ring-blue-400 w-32"
-            />
-          ) : (
+          {values.length > 0 && addingTo !== category && (
             <button
               onClick={() => { setAddingTo(category); setNewValue('') }}
-              className={`text-xs rounded-md px-2 py-1 transition-colors ${
-                values.length === 0
-                  ? 'text-gray-300 italic hover:text-gray-500 hover:bg-gray-100 w-full text-left'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-              }`}
+              className="text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md px-2 py-1 transition-colors"
             >
-              {values.length === 0 ? '+ 추가' : '+'}
+              +
             </button>
           )}
         </div>
+
+        {/* 입력창: 항상 아랫줄에 표시 */}
+        {addingTo === category ? (
+          <input
+            autoFocus
+            value={newValue}
+            onChange={e => setNewValue(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') handleAdd(category)
+              if (e.key === 'Escape') setAddingTo(null)
+            }}
+            onBlur={() => handleAdd(category)}
+            placeholder="입력 후 Enter"
+            className="mt-2 w-full text-sm border border-blue-300 rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-blue-400"
+          />
+        ) : values.length === 0 && (
+          <button
+            onClick={() => { setAddingTo(category); setNewValue('') }}
+            className="mt-1 w-full text-left text-xs text-gray-300 italic hover:text-gray-500 hover:bg-gray-100 rounded-md px-2 py-1 transition-colors"
+          >
+            + 추가
+          </button>
+        )}
       </div>
     )
   }
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-5 gap-2">
-        {ROW1.map(renderCategory)}
-      </div>
-      <div className="grid grid-cols-4 gap-2">
-        {ROW2.map(renderCategory)}
-      </div>
+      {PII_CATEGORIES.map(renderCategory)}
     </div>
   )
 }
