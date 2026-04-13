@@ -22,7 +22,7 @@ export default function TextViewer({ text, piiDict, onAddPii }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [matchIndex, setMatchIndex] = useState(0)
-  const [selectionPopup, setSelectionPopup] = useState(null) // { text, x, y }
+  const [selectionPopup, setSelectionPopup] = useState(null)
   const containerRef = useRef(null)
   const searchInputRef = useRef(null)
   const popupRef = useRef(null)
@@ -43,7 +43,6 @@ export default function TextViewer({ text, piiDict, onAddPii }) {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [searchOpen, selectionPopup])
 
-  // Close popup on outside mousedown
   useEffect(() => {
     if (!selectionPopup) return
     function onMouseDown(e) {
@@ -57,7 +56,6 @@ export default function TextViewer({ text, piiDict, onAddPii }) {
 
   function handleMouseUp() {
     if (!onAddPii) return
-    // Defer so selection is finalized
     setTimeout(() => {
       const selection = window.getSelection()
       const selected = selection?.toString().trim()
@@ -100,7 +98,7 @@ export default function TextViewer({ text, piiDict, onAddPii }) {
   return (
     <div className="flex flex-col h-full" ref={containerRef} tabIndex={-1}>
       {searchOpen && (
-        <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-white border-b border-gray-200 shadow-sm">
+        <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-card border-b border-stroke shadow-sm">
           <input
             ref={searchInputRef}
             value={searchQuery}
@@ -110,21 +108,21 @@ export default function TextViewer({ text, piiDict, onAddPii }) {
               if (e.key === 'Escape') { setSearchOpen(false); setSearchQuery('') }
             }}
             placeholder="텍스트 검색..."
-            className="flex-1 text-sm outline-none border border-gray-300 rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-400"
+            className="flex-1 text-sm outline-none border border-stroke rounded-md px-2 py-1 focus:ring-1 focus:ring-primary text-ink-strong"
           />
           {searchQuery && (
-            <span className="text-xs text-gray-400 whitespace-nowrap">
+            <span className="text-xs text-ink-muted whitespace-nowrap">
               {totalMatches > 0 ? `${matchIndex + 1} / ${totalMatches}` : '없음'}
             </span>
           )}
-          <button onClick={prevMatch} disabled={totalMatches === 0} className="text-gray-500 hover:text-gray-700 disabled:opacity-30 px-1 text-sm">↑</button>
-          <button onClick={nextMatch} disabled={totalMatches === 0} className="text-gray-500 hover:text-gray-700 disabled:opacity-30 px-1 text-sm">↓</button>
-          <button onClick={() => { setSearchOpen(false); setSearchQuery('') }} className="text-gray-400 hover:text-gray-600 text-xs px-1">✕</button>
+          <button onClick={prevMatch} disabled={totalMatches === 0} className="text-ink-base hover:text-ink-strong disabled:opacity-30 px-1 text-sm">↑</button>
+          <button onClick={nextMatch} disabled={totalMatches === 0} className="text-ink-base hover:text-ink-strong disabled:opacity-30 px-1 text-sm">↓</button>
+          <button onClick={() => { setSearchOpen(false); setSearchQuery('') }} className="text-ink-muted hover:text-ink-base text-xs px-1">✕</button>
         </div>
       )}
 
       <div className="flex-1 overflow-y-auto px-6 pb-6" onMouseUp={handleMouseUp}>
-        <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-mono select-text">
+        <div className="bg-surface rounded-xl p-4 text-sm text-ink-base leading-relaxed whitespace-pre-wrap font-mono select-text">
           {segments.map((seg, i) => {
             if (seg.type === 'text') return <span key={i}>{seg.value}</span>
             if (seg.type === 'pii') {
@@ -145,7 +143,6 @@ export default function TextViewer({ text, piiDict, onAddPii }) {
         </div>
       </div>
 
-      {/* 드래그 선택 팝업 */}
       {selectionPopup && (
         <div
           ref={popupRef}
@@ -156,9 +153,9 @@ export default function TextViewer({ text, piiDict, onAddPii }) {
             transform: 'translate(-50%, -100%)',
             zIndex: 50,
           }}
-          className="bg-white border border-gray-200 rounded-xl shadow-lg p-2 min-w-[220px]"
+          className="bg-card border border-stroke rounded-xl shadow-lg p-2 min-w-[220px]"
         >
-          <div className="text-xs text-gray-400 mb-1.5 px-1 truncate max-w-[240px]">
+          <div className="text-xs text-ink-muted mb-1.5 px-1 truncate max-w-[240px]">
             &ldquo;{selectionPopup.text}&rdquo;
           </div>
           <div className="grid grid-cols-3 gap-1">
