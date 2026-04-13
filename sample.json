@@ -2,7 +2,7 @@
   {
     "id": "doc_001",
     "source_filename": "report_001.txt",
-    "status": "reviewed",
+    "status": "reviewing",
     "reviewed_at": "2026-04-10T11:53:09.341Z",
     "reviewed_pii_dict": {
       "NAME": [

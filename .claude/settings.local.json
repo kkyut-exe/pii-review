@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "Read(//usr/local/**)",
-      "Read(//usr/**)"
+      "Read(//usr/**)",
+      "Bash(/Users/sykim/CODE/pii-review/.venv/bin/python -m pip install pytest httpx -q)",
+      "Bash(/Users/sykim/CODE/pii-review/.venv/bin/python -c \"from server.database import Base, get_db, engine; print\\('OK'\\)\")",
+      "Bash(/Users/sykim/CODE/pii-review/.venv/bin/python -m ensurepip)",
+      "Bash(git rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)"
     ]
   }
 }
