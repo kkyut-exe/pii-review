@@ -5,3 +5,6 @@ dist/
 .venv
 data/app.db
 data/test.db
+__pycache__/
+*.pyc
+*.pyo
