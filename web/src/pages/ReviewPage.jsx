@@ -1,9 +1,16 @@
+// web/src/pages/ReviewPage.jsx
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useFile } from '../context/FileContext'
 import PiiEditor from '../components/PiiEditor'
 import StatusBadge from '../components/StatusBadge'
 import TextViewer from '../components/TextViewer'
+
+const COMPLEXITY_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+]
 
 export default function ReviewPage() {
   const { id } = useParams()
@@ -14,12 +21,14 @@ export default function ReviewPage() {
   const record = currentIndex !== -1 ? records[currentIndex] : null
 
   const [piiDict, setPiiDict] = useState(null)
+  const [complexity, setComplexity] = useState(null)
   const [saving, setSaving] = useState(false)
   const [savedMsg, setSavedMsg] = useState(false)
 
   useEffect(() => {
     if (record) {
       setPiiDict(record.reviewed_pii_dict ?? record.pii_dict)
+      setComplexity(record.complexity ?? null)
       if (record.status === 'pending') {
         setRecordStatus(record.id, 'reviewing').catch(() => {})
       }
@@ -27,18 +36,18 @@ export default function ReviewPage() {
   }, [record?.id])
 
   const handleSave = useCallback(async () => {
-    if (!piiDict || saving) return
+    if (!piiDict || !complexity || saving) return
     setSaving(true)
     try {
-      await saveReview(id, piiDict)
+      await saveReview(id, piiDict, complexity)
       setSavedMsg(true)
       setTimeout(() => setSavedMsg(false), 2500)
     } catch (err) {
-      if (err.name !== 'NotAllowedError') alert(`저장 실패: ${err.message}`)
+      alert(`저장 실패: ${err.message}`)
     } finally {
       setSaving(false)
     }
-  }, [id, piiDict, saving, saveReview])
+  }, [id, piiDict, complexity, saving, saveReview])
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -66,6 +75,8 @@ export default function ReviewPage() {
     )
   }
 
+  const canSave = !!complexity && !saving
+
   return (
     <div className="h-screen bg-white flex flex-col">
       <header className="shrink-0 border-b border-gray-100 px-6 py-3 flex items-center justify-between">
@@ -79,6 +90,26 @@ export default function ReviewPage() {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
+          {/* Complexity 선택 */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-400">복잡도</span>
+            {COMPLEXITY_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setComplexity(opt.value)}
+                className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
+                  complexity === opt.value
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'text-gray-500 border-gray-200 hover:border-gray-400'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          <span className="text-gray-200">|</span>
+
           <div className="flex items-center gap-1">
             <button
               onClick={() => goTo(currentIndex - 1)}
@@ -110,9 +141,9 @@ export default function ReviewPage() {
           )}
           <button
             onClick={handleSave}
-            disabled={saving}
-            className="bg-gray-900 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
-            title="저장 (Ctrl+S)"
+            disabled={!canSave}
+            className="bg-gray-900 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-gray-700 disabled:opacity-40 transition-colors"
+            title={!complexity ? '복잡도를 선택하세요' : '저장 (Ctrl+S)'}
           >
             {saving ? '저장 중...' : '저장'}
           </button>
