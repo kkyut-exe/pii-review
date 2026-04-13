@@ -92,7 +92,7 @@ export default function PiiEditor({ piiDict, onChange, docText }) {
         onDragLeave={() => setDragOver(null)}
         onDrop={() => handleDrop(category)}
         className={`border border-l-4 ${BORDER_COLORS[category]} rounded-xl p-3 transition-colors ${
-          isDropTarget ? 'border-primary bg-primary-light' : 'border-stroke'
+          isDropTarget ? 'border-t-primary border-r-primary border-b-primary bg-primary-light' : 'border-stroke'
         }`}
       >
         <div className="flex items-center gap-2 mb-2">

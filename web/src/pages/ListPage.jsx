@@ -1,5 +1,5 @@
 // web/src/pages/ListPage.jsx
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFile } from '../context/FileContext'
 import StatusBadge from '../components/StatusBadge'
@@ -17,6 +17,11 @@ const FILTER_TABS = [
   { key: 'reviewing', label: '검수중' },
   { key: 'reviewed',  label: '검수완료' },
 ]
+
+function SortIcon({ field, sortField, sortDir }) {
+  if (sortField !== field) return <span className="text-ink-muted ml-1 text-xs">↕</span>
+  return <span className="text-primary ml-1 text-xs">{sortDir === 'asc' ? '↑' : '↓'}</span>
+}
 
 export default function ListPage() {
   const { currentUser, records, exportReviewed, uploadLog, logout } = useFile()
@@ -64,6 +69,10 @@ export default function ListPage() {
   const totalPages = Math.max(1, Math.ceil(filteredSorted.length / ITEMS_PER_PAGE))
   const pageRecords = filteredSorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
+  useEffect(() => {
+    setPage(p => Math.min(p, totalPages))
+  }, [totalPages])
+
   function handleSort(field) {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
     else { setSortField(field); setSortDir('asc') }
@@ -96,11 +105,6 @@ export default function ListPage() {
     }
   }
 
-  function SortIcon({ field }) {
-    if (sortField !== field) return <span className="text-ink-muted ml-1 text-xs">↕</span>
-    return <span className="text-primary ml-1 text-xs">{sortDir === 'asc' ? '↑' : '↓'}</span>
-  }
-
   return (
     <div className="min-h-screen bg-surface">
       <div className="max-w-5xl mx-auto px-6 py-8">
@@ -111,9 +115,9 @@ export default function ListPage() {
             <h1 className="text-xl font-bold text-ink-strong">검수 목록</h1>
             <div className="flex items-center gap-3 mt-1 text-sm text-ink-muted">
               <span>전체 {records.length}건</span>
-              <span className="text-[#c17d11]">● 검수전 {pendingCount}</span>
-              {reviewingCount > 0 && <span className="text-[#2956b2]">● 검수중 {reviewingCount}</span>}
-              <span className="text-[#1e7e34]">✓ 완료 {reviewedCount}</span>
+              <span className="text-status-pending-fg">● 검수전 {pendingCount}</span>
+              {reviewingCount > 0 && <span className="text-status-reviewing-fg">● 검수중 {reviewingCount}</span>}
+              <span className="text-status-reviewed-fg">✓ 완료 {reviewedCount}</span>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -196,26 +200,26 @@ export default function ListPage() {
                   onClick={() => handleSort('source_filename')}
                   className="text-left px-5 py-3 text-xs font-semibold text-ink-muted uppercase tracking-wide cursor-pointer hover:text-ink-strong select-none"
                 >
-                  파일명<SortIcon field="source_filename" />
+                  파일명<SortIcon field="source_filename" sortField={sortField} sortDir={sortDir} />
                 </th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-ink-muted uppercase tracking-wide">소스</th>
                 <th
                   onClick={() => handleSort('status')}
                   className="text-left px-5 py-3 text-xs font-semibold text-ink-muted uppercase tracking-wide cursor-pointer hover:text-ink-strong select-none"
                 >
-                  상태<SortIcon field="status" />
+                  상태<SortIcon field="status" sortField={sortField} sortDir={sortDir} />
                 </th>
                 <th
                   onClick={() => handleSort('pii')}
                   className="text-left px-5 py-3 text-xs font-semibold text-ink-muted uppercase tracking-wide cursor-pointer hover:text-ink-strong select-none"
                 >
-                  PII<SortIcon field="pii" />
+                  PII<SortIcon field="pii" sortField={sortField} sortDir={sortDir} />
                 </th>
                 <th
                   onClick={() => handleSort('reviewed_at')}
                   className="text-left px-5 py-3 text-xs font-semibold text-ink-muted uppercase tracking-wide cursor-pointer hover:text-ink-strong select-none"
                 >
-                  검수일<SortIcon field="reviewed_at" />
+                  검수일<SortIcon field="reviewed_at" sortField={sortField} sortDir={sortDir} />
                 </th>
                 <th className="px-5 py-3" />
               </tr>

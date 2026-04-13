@@ -25,7 +25,7 @@ export default function PiiChip({ value, category, onEdit, onDelete, onDragStart
     <div
       draggable={!isEditing}
       onDragStart={handleDragStart}
-      className="inline-flex items-center gap-1 bg-primary-light hover:bg-[#dddaef] rounded-lg px-2 py-1 text-sm transition-colors cursor-grab active:cursor-grabbing select-none"
+      className="inline-flex items-center gap-1 bg-primary-light hover:bg-primary-light-hover rounded-lg px-2 py-1 text-sm transition-colors cursor-grab active:cursor-grabbing select-none"
     >
       {isEditing ? (
         <input

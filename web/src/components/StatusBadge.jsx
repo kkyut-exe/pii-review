@@ -1,8 +1,8 @@
 export default function StatusBadge({ status }) {
   const styles = {
-    pending:   'bg-[#fff4e6] text-[#c17d11]',
-    reviewing: 'bg-[#e8f0fe] text-[#2956b2]',
-    reviewed:  'bg-[#e6f4ea] text-[#1e7e34]',
+    pending:   'bg-status-pending-bg text-status-pending-fg',
+    reviewing: 'bg-status-reviewing-bg text-status-reviewing-fg',
+    reviewed:  'bg-status-reviewed-bg text-status-reviewed-fg',
   }
   const labels = {
     pending:   '검수전',

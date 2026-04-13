@@ -133,7 +133,7 @@ export default function ReviewPage() {
 
           <span className="text-stroke">|</span>
 
-          {savedMsg && <span className="text-xs text-[#1e7e34] font-semibold">저장됨 ✓</span>}
+          {savedMsg && <span className="text-xs text-status-reviewed-fg font-semibold">저장됨 ✓</span>}
           {record.status === 'reviewed' && (
             <button
               onClick={() => setRecordStatus(record.id, 'reviewing').catch(() => {})}
