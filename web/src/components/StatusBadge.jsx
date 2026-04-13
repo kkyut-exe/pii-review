@@ -1,8 +1,8 @@
 export default function StatusBadge({ status }) {
   const styles = {
-    pending:   'bg-orange-100 text-orange-600',
-    reviewing: 'bg-blue-100 text-blue-600',
-    reviewed:  'bg-green-100 text-green-600',
+    pending:   'bg-[#fff4e6] text-[#c17d11]',
+    reviewing: 'bg-[#e8f0fe] text-[#2956b2]',
+    reviewed:  'bg-[#e6f4ea] text-[#1e7e34]',
   }
   const labels = {
     pending:   '검수전',
@@ -11,7 +11,7 @@ export default function StatusBadge({ status }) {
   }
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
         styles[status] ?? styles.pending
       }`}
     >

@@ -25,7 +25,7 @@ export default function PiiChip({ value, category, onEdit, onDelete, onDragStart
     <div
       draggable={!isEditing}
       onDragStart={handleDragStart}
-      className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 rounded-md px-2 py-1 text-sm transition-colors cursor-grab active:cursor-grabbing select-none"
+      className="inline-flex items-center gap-1 bg-primary-light hover:bg-[#dddaef] rounded-lg px-2 py-1 text-sm transition-colors cursor-grab active:cursor-grabbing select-none"
     >
       {isEditing ? (
         <input
@@ -37,23 +37,22 @@ export default function PiiChip({ value, category, onEdit, onDelete, onDragStart
             if (e.key === 'Enter') submitEdit()
             if (e.key === 'Escape') { setEditValue(value); setIsEditing(false) }
           }}
-          className="bg-transparent outline-none min-w-[4rem] cursor-text"
+          className="bg-transparent outline-none min-w-[4rem] cursor-text text-ink-strong"
           style={{ width: `${Math.max(editValue.length, 4)}ch` }}
         />
       ) : (
         <span
           onClick={() => setIsEditing(true)}
-          className="cursor-text"
+          className="cursor-text text-ink-strong"
           title="클릭하여 수정"
         >
           {value}
         </span>
       )}
-
       <button
         onMouseDown={e => e.stopPropagation()}
         onClick={onDelete}
-        className="text-gray-400 hover:text-red-500 text-xs leading-none"
+        className="text-ink-muted hover:text-red-500 text-xs leading-none"
         title="삭제"
       >
         ✕
