@@ -2,3 +2,6 @@
 node_modules/
 dist/
 *.log
+.venv
+data/app.db
+data/test.db
