@@ -26,39 +26,40 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full max-w-sm">
-        <div className="text-center mb-6">
+    <div className="min-h-screen bg-surface flex items-center justify-center">
+      <div className="bg-card rounded-2xl shadow-md border border-stroke p-8 w-full max-w-sm">
+        <div className="text-center mb-8">
           <div className="text-4xl mb-3">🏷️</div>
-          <h1 className="text-xl font-semibold text-gray-800">PII 검수 시스템</h1>
+          <h1 className="text-2xl font-bold text-primary">PII 검수</h1>
+          <p className="text-sm text-ink-muted mt-1">개인정보 라벨링 검수 시스템</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">아이디</label>
+            <label className="block text-sm font-semibold text-ink-base mb-1.5">아이디</label>
             <input
               type="text"
               value={username}
               onChange={e => setUsername(e.target.value)}
               required
               autoFocus
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gray-300"
+              className="w-full border border-stroke rounded-lg px-3 py-2.5 text-sm text-ink-strong outline-none focus:ring-2 focus:ring-primary bg-card"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">비밀번호</label>
+            <label className="block text-sm font-semibold text-ink-base mb-1.5">비밀번호</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-gray-300"
+              className="w-full border border-stroke rounded-lg px-3 py-2.5 text-sm text-ink-strong outline-none focus:ring-2 focus:ring-primary bg-card"
             />
           </div>
           {error && <p className="text-xs text-red-500">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gray-900 text-white text-sm py-2.5 rounded-lg font-medium hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="w-full bg-primary hover:bg-primary-hover text-white text-sm py-2.5 rounded-lg font-semibold disabled:opacity-50 transition-colors mt-2"
           >
             {loading ? '로그인 중...' : '로그인'}
           </button>
