@@ -19,6 +19,18 @@ const CATEGORY_COLORS = {
   AGE:       'bg-indigo-200 text-indigo-900',
 }
 
+const BORDER_COLORS = {
+  NAME:      'border-l-yellow-400',
+  ADDRESS:   'border-l-blue-400',
+  POSTAL:    'border-l-purple-400',
+  RESIDENT:  'border-l-red-400',
+  CONTACT:   'border-l-green-400',
+  EMAIL:     'border-l-pink-400',
+  BIRTHDATE: 'border-l-orange-400',
+  GENDER:    'border-l-teal-400',
+  AGE:       'border-l-indigo-400',
+}
+
 export default function PiiEditor({ piiDict, onChange, docText }) {
   const [addingTo, setAddingTo] = useState(null)
   const [newValue, setNewValue] = useState('')
@@ -79,17 +91,17 @@ export default function PiiEditor({ piiDict, onChange, docText }) {
         onDragOver={e => { e.preventDefault(); setDragOver(category) }}
         onDragLeave={() => setDragOver(null)}
         onDrop={() => handleDrop(category)}
-        className={`border rounded-xl p-3 transition-colors ${
-          isDropTarget ? 'border-blue-400 bg-blue-50' : 'border-gray-100'
+        className={`border border-l-4 ${BORDER_COLORS[category]} rounded-xl p-3 transition-colors ${
+          isDropTarget ? 'border-primary bg-primary-light' : 'border-stroke'
         }`}
       >
         <div className="flex items-center gap-2 mb-2">
           <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${CATEGORY_COLORS[category]}`}>
             {category}
           </span>
-          <span className="text-xs text-gray-400">{CATEGORY_LABELS[category]}</span>
+          <span className="text-xs text-ink-muted">{CATEGORY_LABELS[category]}</span>
           {values.length > 0 && (
-            <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-1.5 py-0.5 ml-auto">
+            <span className="text-xs bg-primary-light text-primary rounded-full px-1.5 py-0.5 ml-auto font-semibold">
               {values.length}
             </span>
           )}
@@ -110,14 +122,13 @@ export default function PiiEditor({ piiDict, onChange, docText }) {
           {values.length > 0 && addingTo !== category && (
             <button
               onClick={() => { setAddingTo(category); setNewValue('') }}
-              className="text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md px-2 py-1 transition-colors"
+              className="text-xs text-ink-muted hover:text-ink-base hover:bg-primary-light rounded-md px-2 py-1 transition-colors"
             >
               +
             </button>
           )}
         </div>
 
-        {/* 입력창: 항상 아랫줄에 표시 */}
         {addingTo === category ? (
           <input
             autoFocus
@@ -129,12 +140,12 @@ export default function PiiEditor({ piiDict, onChange, docText }) {
             }}
             onBlur={() => handleAdd(category)}
             placeholder="입력 후 Enter"
-            className="mt-2 w-full text-sm border border-blue-300 rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-blue-400"
+            className="mt-2 w-full text-sm border border-primary rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-primary text-ink-strong"
           />
         ) : values.length === 0 && (
           <button
             onClick={() => { setAddingTo(category); setNewValue('') }}
-            className="mt-1 w-full text-left text-xs text-gray-300 italic hover:text-gray-500 hover:bg-gray-100 rounded-md px-2 py-1 transition-colors"
+            className="mt-1 w-full text-left text-xs text-ink-muted italic hover:text-ink-base hover:bg-primary-light rounded-md px-2 py-1 transition-colors"
           >
             + 추가
           </button>
