@@ -1,4 +1,5 @@
-import { useState } from 'react'
+// web/src/pages/ListPage.jsx
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFile } from '../context/FileContext'
 import StatusBadge from '../components/StatusBadge'
@@ -9,8 +10,11 @@ function totalPiiCount(record) {
 }
 
 export default function ListPage() {
-  const { files, activeFileId, setActiveFileId, records, openFile, addFile, exportReviewed } = useFile()
+  const { currentUser, records, exportReviewed, uploadLog, logout } = useFile()
   const [filter, setFilter] = useState('all')
+  const [uploading, setUploading] = useState(false)
+  const [uploadMsg, setUploadMsg] = useState(null)
+  const fileInputRef = useRef(null)
   const navigate = useNavigate()
 
   const pendingCount = records.filter(r => r.status === 'pending').length
@@ -18,64 +22,31 @@ export default function ListPage() {
   const reviewedCount = records.filter(r => r.status === 'reviewed').length
   const filtered = records.filter(r => filter === 'all' || r.status === filter)
 
-  if (!files.length) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-5xl mb-4">🏷️</div>
-          <h1 className="text-xl font-semibold text-gray-800 mb-2">LLM 라벨링 검수</h1>
-          <p className="text-sm text-gray-500 mb-6">파싱된 JSON 파일을 열어 검수를 시작하세요.</p>
-          <button
-            onClick={openFile}
-            className="bg-gray-900 text-white text-sm px-5 py-2.5 rounded-lg font-medium hover:bg-gray-700 transition-colors"
-          >
-            JSON 파일 열기
-          </button>
-        </div>
-      </div>
-    )
+  async function handleUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setUploadMsg(null)
+    try {
+      const result = await uploadLog(file)
+      setUploadMsg(`업로드 완료: ${result.records_inserted}건 추가`)
+    } catch (err) {
+      setUploadMsg(`업로드 실패: ${err.message}`)
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
   }
 
   return (
     <div className="min-h-screen bg-white flex">
       <aside className="w-56 bg-gray-50 border-r border-gray-100 p-4 flex flex-col gap-6 shrink-0">
         <div>
-          <div className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">데이터셋</div>
-          <div className="space-y-1">
-            {files.map(file => {
-              const filePending = file.records.filter(r => r.status === 'pending').length
-              const fileReviewing = file.records.filter(r => r.status === 'reviewing').length
-              const fileReviewed = file.records.filter(r => r.status === 'reviewed').length
-              const isActive = file.id === activeFileId
-              return (
-                <button
-                  key={file.id}
-                  onClick={() => setActiveFileId(file.id)}
-                  className={`w-full text-left rounded-lg px-2.5 py-2 transition-colors ${
-                    isActive ? 'bg-gray-200' : 'hover:bg-gray-100'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700 truncate mb-1" title={file.name}>
-                    <span>📁</span>
-                    <span className="truncate">{file.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs pl-0.5">
-                    <span className="text-orange-500">● {filePending}</span>
-                    {fileReviewing > 0 && <span className="text-blue-500">● {fileReviewing}</span>}
-                    <span className="text-green-500">✓ {fileReviewed}</span>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        <div>
           <div className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">필터</div>
           <div className="space-y-0.5">
             {[
               { key: 'all', label: '전체', count: records.length },
-              { key: 'pending', label: '미검수', count: pendingCount },
+              { key: 'pending', label: '검수전', count: pendingCount },
               { key: 'reviewing', label: '검수중', count: reviewingCount },
               { key: 'reviewed', label: '검수완료', count: reviewedCount },
             ].map(({ key, label, count }) => (
@@ -93,13 +64,28 @@ export default function ListPage() {
           </div>
         </div>
 
-        <div className="mt-auto space-y-0.5">
-          <button
-            onClick={addFile}
-            className="w-full text-left text-sm text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
-          >
-            + 파일 추가
-          </button>
+        <div className="mt-auto space-y-1">
+          {currentUser?.role === 'admin' && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".log,.txt"
+                className="hidden"
+                onChange={handleUpload}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full text-left text-sm text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50"
+              >
+                {uploading ? '업로드 중...' : '+ 로그 업로드'}
+              </button>
+              {uploadMsg && (
+                <p className="text-xs text-gray-400 px-2.5">{uploadMsg}</p>
+              )}
+            </>
+          )}
           {reviewedCount > 0 && (
             <button
               onClick={exportReviewed}
@@ -108,6 +94,12 @@ export default function ListPage() {
               검수 완료 Export
             </button>
           )}
+          <button
+            onClick={logout}
+            className="w-full text-left text-sm text-gray-400 hover:text-gray-600 px-2.5 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
+          >
+            로그아웃
+          </button>
         </div>
       </aside>
 
@@ -117,7 +109,7 @@ export default function ListPage() {
             <h1 className="text-xl font-semibold text-gray-900">검수 목록</h1>
             <div className="flex items-center gap-4 text-sm text-gray-400">
               <span>전체 {records.length}건</span>
-              <span className="text-orange-500">● 미검수 {pendingCount}</span>
+              <span className="text-orange-500">● 검수전 {pendingCount}</span>
               {reviewingCount > 0 && <span className="text-blue-500">● 검수중 {reviewingCount}</span>}
               <span className="text-green-500">✓ 검수완료 {reviewedCount}</span>
             </div>
@@ -128,6 +120,7 @@ export default function ListPage() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">파일명</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">소스</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">상태</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">PII</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">검수일</th>
@@ -142,6 +135,7 @@ export default function ListPage() {
                     className="hover:bg-gray-50 cursor-pointer transition-colors group"
                   >
                     <td className="px-5 py-3.5 text-sm text-gray-800 font-medium">📄 {record.source_filename}</td>
+                    <td className="px-5 py-3.5 text-xs text-gray-400">{record.source}</td>
                     <td className="px-5 py-3.5"><StatusBadge status={record.status} /></td>
                     <td className="px-5 py-3.5 text-sm">
                       {totalPiiCount(record) > 0 ? (
@@ -163,7 +157,9 @@ export default function ListPage() {
               </tbody>
             </table>
             {filtered.length === 0 && (
-              <div className="text-center py-12 text-sm text-gray-400">해당하는 항목이 없습니다.</div>
+              <div className="text-center py-12 text-sm text-gray-400">
+                {records.length === 0 ? '로그를 업로드하면 레코드가 나타납니다.' : '해당하는 항목이 없습니다.'}
+              </div>
             )}
           </div>
         </div>

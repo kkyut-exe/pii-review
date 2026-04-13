@@ -5,7 +5,7 @@ export default function StatusBadge({ status }) {
     reviewed:  'bg-green-100 text-green-600',
   }
   const labels = {
-    pending:   '미검수',
+    pending:   '검수전',
     reviewing: '검수중',
     reviewed:  '검수완료',
   }
