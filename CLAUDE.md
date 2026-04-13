@@ -3,6 +3,10 @@
 LLM PII 추출 서비스의 로그 파일을 업로드해 DB에 적재하고, 소규모 팀(2~5명)이 검수하는 도구.
 상세 설계: `docs/design.md`
 
+
+## md 파일 생성 시 반드시 확인해야 할 사항
+- md 파일 이름은 한글로 작성한다.
+
 ## 스택
 - **Backend**: FastAPI + SQLAlchemy + SQLite (`data/app.db`) → 추후 PostgreSQL 이전 예정
 - **Frontend**: React 18 + Vite + Tailwind CSS + React Router v6
@@ -23,7 +27,7 @@ data/app.db   (gitignore)
 | 테이블 | 핵심 컬럼 |
 |--------|-----------|
 | `users` | id, username, password_hash, role(`admin`\|`reviewer`) |
-| `records` | id(UUID), **job_id**(UNIQUE), source_filename, service_started_at, doc_text, pii_dict, status, reviewed_pii_dict, reviewed_by |
+| `records` | id(UUID), **path**(UNIQUE), source_filename, source(`text`\|`ocr`), service_started_at, doc_text, pii_dict, status, reviewed_pii_dict, complexity(`low`\|`medium`\|`high`), reviewed_by, reviewed_at |
 | `log_uploads` | id, original_filename, records_inserted, last_service_started_at, uploaded_by |
 
 ## API
@@ -36,8 +40,9 @@ POST /logs/upload         GET /logs/uploads
 
 ## 로그 파싱 핵심 규칙
 - 블록 단위: `🔍 LLMExtractService 시작` ~ 다음 블록 전까지
-- **스킵 조건**: `[preprocess]` 줄 없음 (텍스트 없는 docx 등)
-- `job_id` = `/tmp/{job_id}/` 폴더명 → DB UNIQUE 키
+- **스킵 조건**: `pii_dict=` 줄 없음
+- `path` = 블록 첫 줄 `path: ...` 전체 경로 → DB UNIQUE 키
+- `source` = 파일명 패턴으로 자동 판별 (`*ocr_chunked*` → `ocr`, 나머지 → `text`)
 - `pii_dict` = Python dict literal → `ast.literal_eval` 파싱
 - **재업로드 중복 처리**: `service_started_at > MAX(DB)` 인 것만 INSERT
 
