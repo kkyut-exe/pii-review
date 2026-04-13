@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from 'react'
+// web/src/context/FileContext.jsx
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 
 const FileContext = createContext(null)
 
@@ -7,123 +8,127 @@ export const PII_CATEGORIES = [
   'EMAIL', 'BIRTHDATE', 'GENDER', 'AGE',
 ]
 
-let nextFileId = 1
+const API_BASE = 'http://localhost:8000'
+
+function apiFetch(path, options = {}) {
+  const token = localStorage.getItem('token')
+  return fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  }).then(async res => {
+    if (res.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.hash = '#/login'
+      throw Object.assign(new Error('Unauthorized'), { status: 401 })
+    }
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.detail ?? `HTTP ${res.status}`)
+    }
+    return res.json()
+  })
+}
 
 export function FileProvider({ children }) {
-  // files: [{ id, handle, name, records }]
-  const [files, setFiles] = useState([])
-  const [activeFileId, setActiveFileId] = useState(null)
+  const [currentUser, setCurrentUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('user')) } catch { return null }
+  })
+  const [records, setRecords] = useState([])
 
-  const activeFile = files.find(f => f.id === activeFileId) ?? null
-  const records = activeFile?.records ?? []
-  const fileName = activeFile?.name ?? ''
+  const fetchRecords = useCallback(() => {
+    if (!currentUser) return
+    apiFetch('/records?limit=500')
+      .then(data => setRecords(data.items))
+      .catch(() => {})
+  }, [currentUser])
 
-  async function openFile() {
-    const file = await _pickAndLoadFile()
-    if (!file) return
-    const id = nextFileId++
-    setFiles(prev => [...prev, { ...file, id }])
-    setActiveFileId(id)
+  useEffect(() => { fetchRecords() }, [fetchRecords])
+
+  async function login(username, password) {
+    const data = await apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    })
+    localStorage.setItem('token', data.access_token)
+    localStorage.setItem('user', JSON.stringify(data.user))
+    setCurrentUser(data.user)
   }
 
-  async function addFile() {
-    const file = await _pickAndLoadFile()
-    if (!file) return
-    const id = nextFileId++
-    setFiles(prev => [...prev, { ...file, id }])
-  }
-
-  async function _pickAndLoadFile() {
-    try {
-      const [handle] = await window.showOpenFilePicker({
-        types: [{ description: 'JSON 파일', accept: { 'application/json': ['.json'] } }],
-        multiple: false,
-      })
-      const file = await handle.getFile()
-      const text = await file.text()
-      return { handle, name: file.name, records: JSON.parse(text) }
-    } catch (err) {
-      if (err.name !== 'AbortError') throw err
-      return null
-    }
+  function logout() {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setCurrentUser(null)
+    setRecords([])
   }
 
   async function setRecordStatus(id, status) {
-    const updated = records.map(r => r.id === id ? { ...r, status } : r)
-    setFiles(prev =>
-      prev.map(f => f.id === activeFileId ? { ...f, records: updated } : f)
-    )
-    try {
-      await _writeToFile(activeFile.handle, updated)
-    } catch (err) {
-      if (err.name !== 'NotAllowedError') throw err
+    const updated = await apiFetch(`/records/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    })
+    setRecords(prev => prev.map(r => r.id === id ? { ...r, ...updated } : r))
+  }
+
+  async function saveReview(id, reviewedPiiDict, complexity) {
+    const updated = await apiFetch(`/records/${id}/review`, {
+      method: 'PUT',
+      body: JSON.stringify({ reviewed_pii_dict: reviewedPiiDict, complexity }),
+    })
+    setRecords(prev => prev.map(r => r.id === id ? { ...r, ...updated } : r))
+    return updated
+  }
+
+  async function uploadLog(file) {
+    const token = localStorage.getItem('token')
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(`${API_BASE}/logs/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.detail ?? `HTTP ${res.status}`)
     }
-  }
-
-  async function saveReview(id, reviewedPiiDict) {
-    const updated = records.map(r =>
-      r.id === id
-        ? {
-            ...r,
-            reviewed_pii_dict: reviewedPiiDict,
-            status: 'reviewed',
-            reviewed_at: new Date().toISOString(),
-          }
-        : r
-    )
-    setFiles(prev =>
-      prev.map(f => f.id === activeFileId ? { ...f, records: updated } : f)
-    )
-    await _writeToFile(activeFile.handle, updated)
-    return updated.find(r => r.id === id)
-  }
-
-  async function _writeToFile(handle, data) {
-    if (!handle) throw new Error('파일이 열려있지 않습니다.')
-    const writable = await handle.createWritable()
-    await writable.write(JSON.stringify(data, null, 2))
-    await writable.close()
+    const result = await res.json()
+    await fetchRecords()  // 새 레코드 반영
+    return result
   }
 
   async function exportReviewed() {
-    const reviewed = records
-      .filter(r => r.status === 'reviewed')
-      .map(({ id, source_filename, doc_text, reviewed_pii_dict, reviewed_at }) => ({
-        id,
-        source_filename,
-        doc_text,
-        pii_dict: reviewed_pii_dict,
-        reviewed_at,
-      }))
-
-    try {
-      const handle = await window.showSaveFilePicker({
-        suggestedName: 'reviewed_dataset.json',
-        types: [{ description: 'JSON 파일', accept: { 'application/json': ['.json'] } }],
-      })
-      const writable = await handle.createWritable()
-      await writable.write(JSON.stringify(reviewed, null, 2))
-      await writable.close()
-    } catch (err) {
-      if (err.name !== 'AbortError') throw err
-    }
+    const token = localStorage.getItem('token')
+    const res = await fetch(`${API_BASE}/records/export`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json()
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'reviewed_dataset.json'
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
-    <FileContext.Provider
-      value={{
-        files,
-        activeFileId,
-        setActiveFileId,
-        records,
-        fileName,
-        openFile,
-        addFile,
-        setRecordStatus,
-        saveReview,
-        exportReviewed,
-      }}
-    >
+    <FileContext.Provider value={{
+      currentUser,
+      records,
+      login,
+      logout,
+      setRecordStatus,
+      saveReview,
+      uploadLog,
+      exportReviewed,
+      fetchRecords,
+    }}>
       {children}
     </FileContext.Provider>
   )
