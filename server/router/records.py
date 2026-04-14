@@ -41,6 +41,33 @@ def bulk_update_status(
     return {"updated": len(records)}
 
 
+@router.delete("/bulk", status_code=204)
+def bulk_delete_records(
+    body: BulkDelete,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    db.query(Record).filter(Record.id.in_(body.ids)).delete(synchronize_session=False)
+    db.commit()
+
+
+@router.delete("/{record_id}", status_code=204)
+def delete_record(
+    record_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    record = db.query(Record).filter_by(id=record_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Record not found")
+    db.delete(record)
+    db.commit()
+
+
 # IMPORTANT: /export 라우트를 /{id} 보다 먼저 정의해야 함
 @router.get("/export")
 def export_reviewed(

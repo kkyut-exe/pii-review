@@ -159,6 +159,43 @@ def test_bulk_status_invalid_status(client, db_session):
     assert resp.status_code == 422
 
 
+def test_bulk_delete_admin_only(client, db_session):
+    reviewer = make_user(db_session, username="rev", role="reviewer")
+    admin = make_user(db_session, username="adm", role="admin")
+    r1 = make_record(db_session, path="/tmp/x/texts_chunked.json", status="pending_delete")
+    r2 = make_record(db_session, path="/tmp/y/texts_chunked.json", status="pending_delete")
+
+    # reviewer 거부
+    headers_rev = auth_headers(reviewer.id, reviewer.username, reviewer.role)
+    resp = client.request("DELETE", "/records/bulk",
+                          json={"ids": [r1.id]}, headers=headers_rev)
+    assert resp.status_code == 403
+
+    # admin 성공
+    headers_adm = auth_headers(admin.id, admin.username, admin.role)
+    resp = client.request("DELETE", "/records/bulk",
+                          json={"ids": [r1.id, r2.id]}, headers=headers_adm)
+    assert resp.status_code == 204
+
+    # DB에서 삭제됐는지 확인
+    resp = client.get(f"/records/{r1.id}", headers=headers_adm)
+    assert resp.status_code == 404
+
+
+def test_delete_single_admin_only(client, db_session):
+    reviewer = make_user(db_session, username="rev2", role="reviewer")
+    admin = make_user(db_session, username="adm2", role="admin")
+    record = make_record(db_session)
+
+    headers_rev = auth_headers(reviewer.id, reviewer.username, reviewer.role)
+    resp = client.delete(f"/records/{record.id}", headers=headers_rev)
+    assert resp.status_code == 403
+
+    headers_adm = auth_headers(admin.id, admin.username, admin.role)
+    resp = client.delete(f"/records/{record.id}", headers=headers_adm)
+    assert resp.status_code == 204
+
+
 def test_export_reviewed_only(client, db_session):
     user = make_user(db_session)
     make_record(db_session, path="/tmp/a/texts_chunked.json", status="reviewed")
