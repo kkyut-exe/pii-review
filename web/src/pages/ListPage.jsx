@@ -1,5 +1,5 @@
 // web/src/pages/ListPage.jsx
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFile } from '../context/FileContext'
 import StatusBadge from '../components/StatusBadge'
@@ -24,7 +24,7 @@ function SortIcon({ field, sortField, sortDir }) {
 }
 
 export default function ListPage() {
-  const { currentUser, records, exportReviewed, uploadLog, logout } = useFile()
+  const { currentUser, records, exportReviewed, uploadLog, logout, bulkUpdateStatus } = useFile()
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [sortField, setSortField] = useState('source_filename')
@@ -32,6 +32,7 @@ export default function ListPage() {
   const [page, setPage] = useState(1)
   const [uploading, setUploading] = useState(false)
   const [uploadMsg, setUploadMsg] = useState(null)
+  const [selectedIds, setSelectedIds] = useState(new Set())
   const fileInputRef = useRef(null)
   const navigate = useNavigate()
 
@@ -40,7 +41,7 @@ export default function ListPage() {
   const reviewedCount  = records.filter(r => r.status === 'reviewed').length
 
   const filteredSorted = useMemo(() => {
-    let result = records
+    let result = records.filter(r => r.status !== 'pending_delete')
     if (filter !== 'all') result = result.filter(r => r.status === filter)
     if (search.trim()) {
       const q = search.trim().toLowerCase()
@@ -87,6 +88,35 @@ export default function ListPage() {
   function handleSearch(e) {
     setSearch(e.target.value)
     setPage(1)
+  }
+
+  const allPageSelected = pageRecords.length > 0 && pageRecords.every(r => selectedIds.has(r.id))
+
+  function toggleSelectAll(checked) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (checked) pageRecords.forEach(r => next.add(r.id))
+      else pageRecords.forEach(r => next.delete(r.id))
+      return next
+    })
+  }
+
+  function toggleSelectOne(id) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  async function handleMoveToTrash() {
+    try {
+      await bulkUpdateStatus([...selectedIds], 'pending_delete')
+      setSelectedIds(new Set())
+    } catch (err) {
+      alert(`실패: ${err.message}`)
+    }
   }
 
   async function handleUpload(e) {
@@ -196,6 +226,14 @@ export default function ListPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-surface border-b border-stroke">
+                <th className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={allPageSelected}
+                    onChange={e => toggleSelectAll(e.target.checked)}
+                    className="w-3 h-3 accent-primary cursor-pointer"
+                  />
+                </th>
                 <th
                   onClick={() => handleSort('source_filename')}
                   className="text-left px-5 py-3 text-xs font-semibold text-ink-muted uppercase tracking-wide cursor-pointer hover:text-ink-strong select-none"
@@ -231,6 +269,17 @@ export default function ListPage() {
                   onClick={() => navigate(`/review/${record.id}`)}
                   className="hover:bg-primary-light cursor-pointer transition-colors group"
                 >
+                  <td
+                    className="px-4 py-3.5"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(record.id)}
+                      onChange={() => toggleSelectOne(record.id)}
+                      className="w-3 h-3 accent-primary cursor-pointer"
+                    />
+                  </td>
                   <td className="px-5 py-3.5 text-sm font-semibold text-ink-strong">📄 {record.source_filename}</td>
                   <td className="px-5 py-3.5 text-xs text-ink-muted">{record.source}</td>
                   <td className="px-5 py-3.5"><StatusBadge status={record.status} /></td>
@@ -256,6 +305,24 @@ export default function ListPage() {
           {filteredSorted.length === 0 && (
             <div className="text-center py-12 text-sm text-ink-muted">
               {records.length === 0 ? '로그를 업로드하면 레코드가 나타납니다.' : '해당하는 항목이 없습니다.'}
+            </div>
+          )}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-3 bg-ink-strong text-white px-5 py-3 rounded-b-xl -mt-px">
+              <span className="text-sm font-bold text-purple-300">{selectedIds.size}건</span>
+              <span className="text-sm text-white/70">선택됨</span>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-sm text-white/50 border border-white/20 rounded-lg px-3 py-1 hover:text-white hover:border-white/40 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleMoveToTrash}
+                className="ml-auto text-sm bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg px-4 py-1.5 transition-colors"
+              >
+                🗑️ 삭제 대기로 이동
+              </button>
             </div>
           )}
         </div>
