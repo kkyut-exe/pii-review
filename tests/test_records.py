@@ -104,6 +104,29 @@ def test_put_review_missing_complexity(client, db_session):
     assert resp.status_code == 422
 
 
+def test_patch_status_to_pending_delete_saves_prev_status(client, db_session):
+    user = make_user(db_session)
+    record = make_record(db_session, status="reviewing")
+    headers = auth_headers(user.id, user.username, user.role)
+
+    resp = client.patch(f"/records/{record.id}/status",
+                        json={"status": "pending_delete"}, headers=headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "pending_delete"
+    assert data["prev_status"] == "reviewing"
+
+
+def test_patch_status_invalid(client, db_session):
+    user = make_user(db_session)
+    record = make_record(db_session)
+    headers = auth_headers(user.id, user.username, user.role)
+
+    resp = client.patch(f"/records/{record.id}/status",
+                        json={"status": "invalid_status"}, headers=headers)
+    assert resp.status_code == 422
+
+
 def test_export_reviewed_only(client, db_session):
     user = make_user(db_session)
     make_record(db_session, path="/tmp/a/texts_chunked.json", status="reviewed")

@@ -12,6 +12,7 @@ from server.router.auth import get_current_user
 router = APIRouter()
 
 VALID_COMPLEXITY = {"low", "medium", "high"}
+VALID_STATUSES = {"pending", "reviewing", "reviewed", "pending_delete"}
 
 
 def _to_record_out(record: Record) -> RecordOut:
@@ -66,6 +67,9 @@ def update_status(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    if body.status not in VALID_STATUSES:
+        raise HTTPException(status_code=422, detail=f"Invalid status: {body.status}")
+
     record = db.query(Record).filter_by(id=record_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
@@ -74,6 +78,10 @@ def update_status(
     if record.status == "reviewed" and body.status == "reviewing":
         if current_user.role != "admin":
             raise HTTPException(status_code=403, detail="Admin only")
+
+    # pending_delete 이동 시 이전 상태 저장
+    if body.status == "pending_delete":
+        record.prev_status = record.status
 
     record.status = body.status
     db.commit()
