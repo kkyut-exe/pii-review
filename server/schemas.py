@@ -21,6 +21,15 @@ class ReviewUpdate(BaseModel):
     complexity: str  # 'low' | 'medium' | 'high'
 
 
+class BulkStatusUpdate(BaseModel):
+    ids: list[str]
+    status: str
+
+
+class BulkDelete(BaseModel):
+    ids: list[str]
+
+
 # ── 응답 스키마 ──────────────────────────────────────
 
 class UserOut(BaseModel):
@@ -46,6 +55,7 @@ class RecordOut(BaseModel):
     doc_text: Optional[str]
     pii_dict: Optional[dict]
     status: str
+    prev_status: Optional[str] = None
     reviewed_pii_dict: Optional[dict]
     complexity: Optional[str]
     reviewed_by: Optional[int]

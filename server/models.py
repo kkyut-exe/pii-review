@@ -25,7 +25,8 @@ class Record(Base):
     service_started_at = Column(DateTime)
     doc_text = Column(Text)
     pii_dict = Column(JSON)
-    status = Column(String, default="pending")  # 'pending' | 'reviewing' | 'reviewed'
+    status = Column(String, default="pending")  # 'pending' | 'reviewing' | 'reviewed' | 'pending_delete'
+    prev_status = Column(String, nullable=True)  # pending_delete 이동 전 상태 보존
     reviewed_pii_dict = Column(JSON)
     complexity = Column(String)      # 'low' | 'medium' | 'high' — required at review time
     reviewed_by = Column(Integer, ForeignKey("users.id"))
