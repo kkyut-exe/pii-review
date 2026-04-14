@@ -4,9 +4,9 @@ import Sidebar from './Sidebar'
 
 export default function MainLayout() {
   return (
-    <div className="flex min-h-screen bg-surface">
+    <div className="flex items-start bg-surface">
       <Sidebar />
-      <main className="flex-1 min-w-0">
+      <main className="flex-1 min-w-0 min-h-screen">
         <Outlet />
       </main>
     </div>

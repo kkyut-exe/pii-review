@@ -1,5 +1,5 @@
 # server/router/logs.py
-from datetime import datetime
+from datetime import datetime, UTC
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -19,6 +19,9 @@ async def upload_log(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+
     content = await file.read()
     try:
         text = content.decode("utf-8")
@@ -61,7 +64,7 @@ async def upload_log(
         records_inserted=inserted,
         last_service_started_at=last_ts,
         uploaded_by=current_user.id,
-        uploaded_at=datetime.utcnow(),
+        uploaded_at=datetime.now(UTC),
     )
     db.add(log_entry)
     db.commit()

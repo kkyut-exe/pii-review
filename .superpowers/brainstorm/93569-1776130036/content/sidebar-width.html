@@ -1,0 +1,214 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Apple SD Gothic Neo', sans-serif; }
+
+  .frames { display: flex; gap: 16px; align-items: flex-start; }
+  .frame-wrap { flex: 1; }
+  .frame-label { font-size: 11px; font-weight: 700; color: #6c63ff; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; text-align: center; }
+
+  .frame {
+    display: flex; height: 320px;
+    border-radius: 10px; overflow: hidden;
+    border: 1.5px solid #e5e4ef; background: #f1f0f6;
+  }
+
+  .sidebar {
+    background: #ffffff; border-right: 1.5px solid #e5e4ef;
+    display: flex; flex-direction: column; padding: 16px 0;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    font-size: 12px; font-weight: 700; color: #1a1825;
+    padding: 0 14px 14px; border-bottom: 1px solid #e5e4ef; margin-bottom: 6px;
+  }
+  .sidebar-logo span { color: #6c63ff; }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px; font-size: 12px; color: #4b4860;
+    position: relative; white-space: nowrap; overflow: hidden;
+  }
+  .nav-item.active { background: #ededf8; color: #6c63ff; font-weight: 600; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 3px; background: #6c63ff; border-radius: 0 2px 2px 0;
+  }
+  .nav-icon { font-size: 14px; flex-shrink: 0; }
+  .nav-text { overflow: hidden; text-overflow: ellipsis; }
+  .badge {
+    margin-left: auto; flex-shrink: 0;
+    background: #ff4757; color: white;
+    font-size: 9px; font-weight: 700; border-radius: 10px;
+    padding: 1px 5px;
+  }
+  .sidebar-bottom {
+    margin-top: auto; padding: 10px 14px 0;
+    border-top: 1px solid #e5e4ef;
+  }
+  .user-row { display: flex; align-items: center; gap: 6px; }
+  .avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #ededf8; color: #6c63ff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+  .username { font-size: 11px; color: #9693a8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .main-header {
+    background: white; border-bottom: 1.5px solid #e5e4ef;
+    padding: 12px 16px; font-size: 13px; font-weight: 700; color: #1a1825;
+  }
+  .main-body { flex: 1; padding: 14px 16px; }
+
+  .stat-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .stat-card {
+    flex: 1; background: white; border-radius: 8px;
+    border: 1.5px solid #e5e4ef; padding: 10px 10px 8px;
+    min-width: 0;
+  }
+  .stat-label { font-size: 9px; color: #9693a8; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat-value { font-size: 18px; font-weight: 700; color: #1a1825; }
+  .prog-wrap { background: white; border-radius: 8px; border: 1.5px solid #e5e4ef; padding: 10px 12px; }
+  .prog-label { font-size: 11px; color: #4b4860; font-weight: 600; margin-bottom: 6px; }
+  .prog-bar { background: #f1f0f6; border-radius: 6px; height: 8px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, #6c63ff, #a29bfe); border-radius: 6px; }
+  .prog-meta { font-size: 10px; color: #9693a8; margin-top: 4px; }
+</style>
+
+<h2>사이드바 너비 비교</h2>
+<p class="subtitle">콘텐츠 영역 확보량과 메뉴 가독성의 균형</p>
+
+<div class="frames" style="margin-top: 20px;">
+
+  <!-- A: 160px -->
+  <div class="frame-wrap" data-choice="a" onclick="toggleSelect(this)">
+    <div class="frame-label">A — 160px (좁게)</div>
+    <div class="frame">
+      <div class="sidebar" style="width:160px;">
+        <div class="sidebar-logo">PII <span>Review</span></div>
+        <div class="nav-item active">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">대시보드</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">📋</span>
+          <span class="nav-text">검수 목록</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">🗑️</span>
+          <span class="nav-text">삭제 대기</span>
+          <span class="badge">3</span>
+        </div>
+        <div class="sidebar-bottom">
+          <div class="user-row">
+            <div class="avatar">관</div>
+            <span class="username">admin</span>
+          </div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="main-header">📊 대시보드</div>
+        <div class="main-body">
+          <div class="stat-row">
+            <div class="stat-card"><div class="stat-label">전체</div><div class="stat-value">142</div></div>
+            <div class="stat-card"><div class="stat-label">검수전</div><div class="stat-value" style="color:#c17d11;">38</div></div>
+            <div class="stat-card"><div class="stat-label">완료</div><div class="stat-value" style="color:#1e7e34;">89</div></div>
+          </div>
+          <div class="prog-wrap">
+            <div class="prog-label">전체 진행률</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:63%;"></div></div>
+            <div class="prog-meta">89 / 142 · 63%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B: 200px -->
+  <div class="frame-wrap" data-choice="b" onclick="toggleSelect(this)">
+    <div class="frame-label">B — 200px (기본)</div>
+    <div class="frame">
+      <div class="sidebar" style="width:200px;">
+        <div class="sidebar-logo">PII <span>Review</span></div>
+        <div class="nav-item active">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">대시보드</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">📋</span>
+          <span class="nav-text">검수 목록</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">🗑️</span>
+          <span class="nav-text">삭제 대기</span>
+          <span class="badge">3</span>
+        </div>
+        <div class="sidebar-bottom">
+          <div class="user-row">
+            <div class="avatar">관</div>
+            <span class="username">admin</span>
+          </div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="main-header">📊 대시보드</div>
+        <div class="main-body">
+          <div class="stat-row">
+            <div class="stat-card"><div class="stat-label">전체</div><div class="stat-value">142</div></div>
+            <div class="stat-card"><div class="stat-label">검수전</div><div class="stat-value" style="color:#c17d11;">38</div></div>
+            <div class="stat-card"><div class="stat-label">완료</div><div class="stat-value" style="color:#1e7e34;">89</div></div>
+          </div>
+          <div class="prog-wrap">
+            <div class="prog-label">전체 진행률</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:63%;"></div></div>
+            <div class="prog-meta">89 / 142 · 63%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C: 240px -->
+  <div class="frame-wrap" data-choice="c" onclick="toggleSelect(this)">
+    <div class="frame-label">C — 240px (넓게)</div>
+    <div class="frame">
+      <div class="sidebar" style="width:240px;">
+        <div class="sidebar-logo">PII <span>Review</span></div>
+        <div class="nav-item active">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">대시보드</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">📋</span>
+          <span class="nav-text">검수 목록</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">🗑️</span>
+          <span class="nav-text">삭제 대기</span>
+          <span class="badge">3</span>
+        </div>
+        <div class="sidebar-bottom">
+          <div class="user-row">
+            <div class="avatar">관</div>
+            <span class="username">admin</span>
+          </div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="main-header">📊 대시보드</div>
+        <div class="main-body">
+          <div class="stat-row">
+            <div class="stat-card"><div class="stat-label">전체</div><div class="stat-value">142</div></div>
+            <div class="stat-card"><div class="stat-label">검수전</div><div class="stat-value" style="color:#c17d11;">38</div></div>
+            <div class="stat-card"><div class="stat-label">완료</div><div class="stat-value" style="color:#1e7e34;">89</div></div>
+          </div>
+          <div class="prog-wrap">
+            <div class="prog-label">전체 진행률</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:63%;"></div></div>
+            <div class="prog-meta">89 / 142 · 63%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

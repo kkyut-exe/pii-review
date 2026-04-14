@@ -30,6 +30,24 @@ class BulkDelete(BaseModel):
     ids: list[str]
 
 
+class RenameRecord(BaseModel):
+    source_filename: str
+
+
+class UpdateDocText(BaseModel):
+    doc_text: str
+
+
+class ManualRecordCreate(BaseModel):
+    doc_text: str
+    source_filename: Optional[str] = None
+    pii_dict: Optional[dict | str] = None
+
+
+class DatasetUploadResponse(BaseModel):
+    version_id: int
+
+
 # ── 응답 스키마 ──────────────────────────────────────
 
 class UserOut(BaseModel):
@@ -79,3 +97,60 @@ class LogUploadOut(BaseModel):
     uploaded_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class DatasetItemOut(BaseModel):
+    id: int
+    row_index: int
+    original_filename: str
+    normalized_basename: str
+    raw_row: dict
+    match_status: str
+    matched_record_id: Optional[str] = None
+    matched_record_source_filename: Optional[str] = None
+    matched_record_status: Optional[str] = None
+    reviewed_pii_dict: Optional[dict] = None
+    reviewed_at: Optional[datetime] = None
+    reviewer_username: Optional[str] = None
+
+
+class DatasetVersionSummaryOut(BaseModel):
+    id: int
+    version: str
+    source_csv_filename: str
+    filename_column: Optional[str] = None
+    uploaded_at: datetime
+    uploaded_by: int
+    uploader_username: Optional[str] = None
+    total_items: int
+    matched_reviewed_count: int
+    matched_not_reviewed_count: int
+    unmatched_count: int
+    ambiguous_count: int
+
+
+class DatasetOut(BaseModel):
+    id: int
+    name: str
+    kind: str
+    created_at: datetime
+    versions: list[DatasetVersionSummaryOut]
+
+
+class DatasetVersionDetailOut(BaseModel):
+    id: int
+    dataset_id: int
+    dataset_name: str
+    dataset_kind: str
+    version: str
+    source_csv_filename: str
+    filename_column: Optional[str] = None
+    uploaded_at: datetime
+    uploaded_by: int
+    uploader_username: Optional[str] = None
+    total_items: int
+    matched_reviewed_count: int
+    matched_not_reviewed_count: int
+    unmatched_count: int
+    ambiguous_count: int
+    items: list[DatasetItemOut]

@@ -59,6 +59,7 @@ def _parse_block(lines: list[str]) -> Optional[ParsedBlock]:
     source_filename = ""
     doc_text = ""
     pii_dict = None
+    has_preprocess = False
 
     i = 1
     while i < len(lines):
@@ -73,6 +74,10 @@ def _parse_block(lines: list[str]) -> Optional[ParsedBlock]:
                 source_filename = line.split("source_filename=", 1)[1].strip()
                 i += 1
 
+        elif "[preprocess]" in line and "text_len=" in line:
+            has_preprocess = True
+            i += 1
+
         elif "[run_pipeline] doc_text=" in line:
             doc_text, i = _collect_multiline(lines, i + 1)
 
@@ -82,12 +87,13 @@ def _parse_block(lines: list[str]) -> Optional[ParsedBlock]:
                 pii_dict = ast.literal_eval(raw)
             except (ValueError, SyntaxError):
                 return None
+            if not isinstance(pii_dict, dict):
+                return None
 
         else:
             i += 1
 
-    # pii_dict 없으면 스킵
-    if pii_dict is None:
+    if not has_preprocess or not doc_text.strip() or pii_dict is None:
         return None
 
     return ParsedBlock(

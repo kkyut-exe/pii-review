@@ -35,6 +35,59 @@ def test_list_records(client, db_session):
     assert len(data["items"]) == 2
 
 
+def test_create_manual_record_with_default_pii_dict(client, db_session):
+    admin = make_user(db_session, username="admin_manual", role="admin")
+    headers = auth_headers(admin.id, admin.username, admin.role)
+
+    resp = client.post("/records/manual", json={"doc_text": "수동 입력 본문"}, headers=headers)
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["doc_text"] == "수동 입력 본문"
+    assert data["status"] == "pending"
+    assert data["source"] == "text"
+    assert data["source_filename"].startswith("manual-")
+    assert data["pii_dict"]["NAME"] == []
+    assert data["pii_dict"]["EMAIL"] == []
+
+
+def test_create_manual_record_parses_pii_dict_string(client, db_session):
+    admin = make_user(db_session, username="admin_manual_2", role="admin")
+    headers = auth_headers(admin.id, admin.username, admin.role)
+
+    body = {
+        "doc_text": "홍길동 이메일은 test@example.com 입니다.",
+        "source_filename": "수동등록.txt",
+        "pii_dict": "{'NAME': ['홍길동'], 'EMAIL': ['test@example.com']}",
+    }
+    resp = client.post("/records/manual", json=body, headers=headers)
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["source_filename"] == "수동등록.txt"
+    assert data["pii_dict"]["NAME"] == ["홍길동"]
+    assert data["pii_dict"]["EMAIL"] == ["test@example.com"]
+    assert data["pii_dict"]["ADDRESS"] == []
+
+
+def test_create_manual_record_requires_admin(client, db_session):
+    reviewer = make_user(db_session, username="review_manual", role="reviewer")
+    headers = auth_headers(reviewer.id, reviewer.username, reviewer.role)
+
+    resp = client.post("/records/manual", json={"doc_text": "본문"}, headers=headers)
+    assert resp.status_code == 403
+
+
+def test_create_manual_record_rejects_invalid_pii_string(client, db_session):
+    admin = make_user(db_session, username="admin_manual_3", role="admin")
+    headers = auth_headers(admin.id, admin.username, admin.role)
+
+    resp = client.post(
+        "/records/manual",
+        json={"doc_text": "본문", "pii_dict": "{bad json"},
+        headers=headers,
+    )
+    assert resp.status_code == 422
+
+
 def test_list_records_unauthenticated(client):
     resp = client.get("/records")
     assert resp.status_code == 401
@@ -57,6 +110,15 @@ def test_patch_status_pending_to_reviewing(client, db_session):
                         json={"status": "reviewing"}, headers=headers)
     assert resp.status_code == 200
     assert resp.json()["status"] == "reviewing"
+
+
+def test_patch_status_pending_to_reviewed_forbidden(client, db_session):
+    user = make_user(db_session)
+    record = make_record(db_session, status="pending")
+    headers = auth_headers(user.id, user.username, user.role)
+    resp = client.patch(f"/records/{record.id}/status",
+                        json={"status": "reviewed"}, headers=headers)
+    assert resp.status_code == 422
 
 
 def test_patch_status_reviewed_to_reviewing_requires_admin(client, db_session):
@@ -93,6 +155,18 @@ def test_put_review(client, db_session):
     assert data["status"] == "reviewed"
     assert data["complexity"] == "medium"
     assert data["reviewed_by"] == user.id
+
+
+def test_put_review_requires_reviewing_status(client, db_session):
+    user = make_user(db_session)
+    record = make_record(db_session, status="pending")
+    headers = auth_headers(user.id, user.username, user.role)
+    body = {
+        "reviewed_pii_dict": {"NAME": ["김철수"]},
+        "complexity": "medium",
+    }
+    resp = client.put(f"/records/{record.id}/review", json=body, headers=headers)
+    assert resp.status_code == 422
 
 
 def test_put_review_missing_complexity(client, db_session):
@@ -155,6 +229,17 @@ def test_bulk_status_invalid_status(client, db_session):
 
     resp = client.post("/records/bulk-status",
                        json={"ids": [record.id], "status": "bad"},
+                       headers=headers)
+    assert resp.status_code == 422
+
+
+def test_bulk_status_only_supports_pending_delete(client, db_session):
+    user = make_user(db_session)
+    record = make_record(db_session)
+    headers = auth_headers(user.id, user.username, user.role)
+
+    resp = client.post("/records/bulk-status",
+                       json={"ids": [record.id], "status": "reviewing"},
                        headers=headers)
     assert resp.status_code == 422
 

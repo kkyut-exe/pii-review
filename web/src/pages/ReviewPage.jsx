@@ -14,16 +14,22 @@ const COMPLEXITY_OPTIONS = [
 
 export default function ReviewPage() {
   const { id } = useParams()
-  const { records, saveReview, setRecordStatus } = useFile()
+  const { currentUser, records, saveReview, setRecordStatus, renameRecord, updateDocText } = useFile()
   const navigate = useNavigate()
 
-  const currentIndex = records.findIndex(r => r.id === id)
-  const record = currentIndex !== -1 ? records[currentIndex] : null
+  const record = records.find(r => r.id === id) ?? null
+  const reviewingRecords = records.filter(r => r.status === 'reviewing')
+  const currentIndex = reviewingRecords.findIndex(r => r.id === id)
 
   const [piiDict, setPiiDict] = useState(null)
   const [complexity, setComplexity] = useState(null)
   const [saving, setSaving] = useState(false)
   const [savedMsg, setSavedMsg] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [nameValue, setNameValue] = useState('')
+  const [editingText, setEditingText] = useState(false)
+  const [textValue, setTextValue] = useState('')
+  const [savingText, setSavingText] = useState(false)
 
   useEffect(() => {
     if (record) {
@@ -60,9 +66,41 @@ export default function ReviewPage() {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [handleSave])
 
+  async function handleRename() {
+    const trimmed = nameValue.trim()
+    setEditingName(false)
+    if (!trimmed || trimmed === record.source_filename) return
+    try {
+      await renameRecord(id, trimmed)
+    } catch (err) {
+      alert(`파일명 변경 실패: ${err.message}`)
+    }
+  }
+
+  async function handleSaveDocText() {
+    setSavingText(true)
+    try {
+      await updateDocText(id, textValue)
+      setEditingText(false)
+    } catch (err) {
+      alert(`원문 저장 실패: ${err.message}`)
+    } finally {
+      setSavingText(false)
+    }
+  }
+
+  async function handleMoveToTrash() {
+    try {
+      await setRecordStatus(id, 'pending_delete')
+      navigate('/list')
+    } catch (err) {
+      alert(`삭제 대기 이동 실패: ${err.message}`)
+    }
+  }
+
   function goTo(index) {
-    if (index >= 0 && index < records.length) {
-      navigate(`/review/${records[index].id}`)
+    if (index >= 0 && index < reviewingRecords.length) {
+      navigate(`/review/${reviewingRecords[index].id}`)
     }
   }
 
@@ -70,7 +108,7 @@ export default function ReviewPage() {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center text-ink-muted text-sm">
         레코드를 찾을 수 없습니다.{' '}
-        <button onClick={() => navigate('/')} className="ml-2 underline hover:text-ink-strong">목록으로</button>
+        <button onClick={() => navigate(-1)} className="ml-2 underline hover:text-ink-strong">목록으로</button>
       </div>
     )
   }
@@ -82,13 +120,34 @@ export default function ReviewPage() {
       <header className="shrink-0 bg-card border-b border-stroke shadow-sm px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate(-1)}
             className="text-sm text-ink-muted hover:text-ink-strong transition-colors shrink-0"
           >
             ← 목록으로
           </button>
           <span className="text-stroke shrink-0">|</span>
-          <span className="text-sm text-ink-strong font-semibold truncate">📄 {record.source_filename}</span>
+          {editingName ? (
+            <input
+              value={nameValue}
+              onChange={e => setNameValue(e.target.value)}
+              onBlur={handleRename}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleRename()
+                if (e.key === 'Escape') setEditingName(false)
+              }}
+              className="text-sm font-semibold text-ink-strong border-b border-primary outline-none bg-transparent w-56"
+              autoFocus
+            />
+          ) : (
+            <button
+              onClick={() => { setNameValue(record.source_filename ?? ''); setEditingName(true) }}
+              className="flex items-center gap-1.5 group min-w-0"
+              title="파일명 수정"
+            >
+              <span className="text-sm text-ink-strong font-semibold truncate">📄 {record.source_filename}</span>
+              <span className="text-xs text-ink-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0">✎</span>
+            </button>
+          )}
           <StatusBadge status={record.status} />
         </div>
 
@@ -121,10 +180,12 @@ export default function ReviewPage() {
             >
               ‹ 이전
             </button>
-            <span className="text-xs text-ink-muted">{currentIndex + 1} / {records.length}</span>
+            <span className="text-xs text-ink-muted">
+              {currentIndex >= 0 ? `${currentIndex + 1} / ${reviewingRecords.length}` : `- / ${reviewingRecords.length}`}
+            </span>
             <button
               onClick={() => goTo(currentIndex + 1)}
-              disabled={currentIndex >= records.length - 1}
+              disabled={currentIndex < 0 || currentIndex >= reviewingRecords.length - 1}
               className="text-sm text-ink-muted hover:text-ink-strong disabled:opacity-30 px-2 py-1 rounded hover:bg-primary-light transition-colors"
             >
               다음 ›
@@ -134,7 +195,13 @@ export default function ReviewPage() {
           <span className="text-stroke">|</span>
 
           {savedMsg && <span className="text-xs text-status-reviewed-fg font-semibold">저장됨 ✓</span>}
-          {record.status === 'reviewed' && (
+          <button
+            onClick={handleMoveToTrash}
+            className="text-sm text-red-500 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            삭제 대기
+          </button>
+          {record.status === 'reviewed' && currentUser?.role === 'admin' && (
             <button
               onClick={() => setRecordStatus(record.id, 'reviewing').catch(() => {})}
               className="text-sm text-primary border border-primary px-3 py-1.5 rounded-lg hover:bg-primary-light transition-colors"
@@ -156,17 +223,52 @@ export default function ReviewPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* 좌: 원문 텍스트 */}
         <div className="w-1/2 border-r border-stroke flex flex-col overflow-hidden">
-          <div className="px-6 pt-4 pb-2 shrink-0 flex items-center gap-2">
-            <h2 className="text-xs font-semibold text-ink-muted uppercase tracking-wide">원문 텍스트</h2>
-            <span className="text-xs text-ink-muted">— Ctrl+F로 검색</span>
+          <div className="px-6 pt-4 pb-2 shrink-0 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-semibold text-ink-muted uppercase tracking-wide">원문 텍스트</h2>
+              {!editingText && <span className="text-xs text-ink-muted">— Ctrl+F로 검색</span>}
+            </div>
+            {editingText ? (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setEditingText(false)}
+                  className="text-xs text-ink-muted px-2.5 py-1 rounded-md border border-stroke hover:bg-primary-light transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleSaveDocText}
+                  disabled={savingText}
+                  className="text-xs bg-primary text-white px-2.5 py-1 rounded-md hover:bg-primary-hover disabled:opacity-40 transition-colors"
+                >
+                  {savingText ? '저장 중...' : '저장'}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setTextValue(record.doc_text ?? ''); setEditingText(true) }}
+                className="text-xs text-ink-muted hover:text-ink-strong border border-stroke px-2.5 py-1 rounded-md hover:bg-primary-light transition-colors"
+              >
+                편집
+              </button>
+            )}
           </div>
-          <TextViewer
-            text={record.doc_text}
-            piiDict={piiDict}
-            onAddPii={(category, value) =>
-              setPiiDict(prev => ({ ...prev, [category]: [...(prev[category] ?? []), value] }))
-            }
-          />
+          {editingText ? (
+            <textarea
+              value={textValue}
+              onChange={e => setTextValue(e.target.value)}
+              className="flex-1 mx-6 mb-6 p-4 text-sm font-mono text-ink-base bg-surface rounded-xl border border-primary outline-none resize-none leading-relaxed"
+              autoFocus
+            />
+          ) : (
+            <TextViewer
+              text={record.doc_text}
+              piiDict={piiDict}
+              onAddPii={(category, value) =>
+                setPiiDict(prev => ({ ...prev, [category]: [...(prev[category] ?? []), value] }))
+              }
+            />
+          )}
         </div>
 
         {/* 우: PII 검수 */}

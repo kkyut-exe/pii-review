@@ -1,0 +1,219 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Apple SD Gothic Neo', sans-serif; }
+
+  .two-col { display: flex; gap: 20px; align-items: flex-start; }
+  .col { flex: 1; }
+  .col-label { font-size: 12px; font-weight: 700; color: #6c63ff; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 10px; }
+
+  .tframe {
+    border-radius: 10px; border: 1.5px solid #e5e4ef;
+    overflow: hidden; background: white; font-size: 12px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #f1f0f6; border-bottom: 1.5px solid #e5e4ef; }
+  th { padding: 8px 10px; text-align: left; font-size: 10px; font-weight: 700; color: #9693a8; text-transform: uppercase; letter-spacing: .05em; }
+  th.cb-col, td.cb-col { width: 28px; padding: 8px 6px 8px 10px; }
+  td { padding: 8px 10px; border-bottom: 1px solid #f1f0f6; color: #4b4860; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr.selected td { background: #f0effc; }
+
+  /* 작은 체크박스 — SVG 방식으로 크기 완전 제어 */
+  .cb-wrap {
+    width: 11px; height: 11px; display: block; flex-shrink: 0; position: relative; cursor: pointer;
+  }
+  .cb-wrap input[type=checkbox] {
+    position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
+  }
+  .cb-box {
+    display: block; width: 11px; height: 11px;
+    border: 1.5px solid #c8c5dc; border-radius: 2.5px;
+    background: white; transition: background .1s, border-color .1s;
+    position: relative;
+  }
+  .cb-wrap input:checked ~ .cb-box {
+    background: #6c63ff; border-color: #6c63ff;
+  }
+  /* SVG 체크 마크 — 박스 안에 꼭 맞게 */
+  .cb-box::after {
+    content: '';
+    display: none;
+    position: absolute;
+    left: 2px; top: 0.5px;
+    width: 3.5px; height: 6px;
+    border-right: 1.5px solid white;
+    border-bottom: 1.5px solid white;
+    transform: rotate(45deg);
+    transform-origin: center;
+  }
+  .cb-wrap input:checked ~ .cb-box::after {
+    display: block;
+  }
+
+  .badge-pending   { background: #fff4e6; color: #c17d11; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+  .badge-reviewing { background: #e8f0fe; color: #2956b2; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+  .badge-trash     { background: #ffe4e6; color: #ff4757; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+
+  .bulk-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: #1a1825; color: white;
+    padding: 10px 14px; border-radius: 0 0 10px 10px;
+    font-size: 12px;
+  }
+  .bulk-count { font-weight: 700; color: #a29bfe; }
+  .bulk-btn {
+    margin-left: auto; background: #ff4757; color: white;
+    border: none; border-radius: 6px; padding: 5px 12px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .cancel-btn {
+    background: transparent; color: #9693a8;
+    border: 1px solid #4b4860; border-radius: 6px; padding: 5px 10px;
+    font-size: 12px; cursor: pointer;
+  }
+
+  .trash-actions { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+  .btn-restore      { background: white; border: 1.5px solid #e5e4ef; color: #4b4860; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+  .btn-delete-final { background: #ff4757; color: white; border: none; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+  .admin-only { font-size: 10px; color: #ff4757; background: #ffe4e6; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+
+  .arrow-flow { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 0 20px; font-size: 12px; color: #9693a8; }
+  .flow-step  { background: #f1f0f6; border: 1.5px solid #e5e4ef; border-radius: 8px; padding: 6px 12px; font-size: 11px; color: #4b4860; font-weight: 600; }
+  .flow-arrow { color: #6c63ff; font-weight: 700; font-size: 14px; }
+</style>
+
+<h2>섹션 2: 체크박스 선택 → 삭제 대기 페이지</h2>
+<p class="subtitle">선택한 항목을 삭제 대기로 보내고, admin이 최종 삭제 확정</p>
+
+<div class="arrow-flow">
+  <div class="flow-step">pending / reviewing / reviewed</div>
+  <div class="flow-arrow">→ 체크 후 이동 →</div>
+  <div class="flow-step" style="color:#ff4757;border-color:#ffb3bb;background:#fff5f5;">pending_delete</div>
+  <div class="flow-arrow" style="color:#ff4757;">→ admin 확정 →</div>
+  <div class="flow-step" style="color:#9693a8;">DB 영구 삭제</div>
+</div>
+
+<div class="two-col">
+
+  <!-- 검수 목록 -->
+  <div class="col">
+    <div class="col-label">검수 목록 (/list) — 2건 선택 상태</div>
+    <div class="tframe">
+      <table>
+        <thead>
+          <tr>
+            <th class="cb-col">
+              <label class="cb-wrap">
+                <input type="checkbox" checked />
+                <span class="cb-box"></span>
+              </label>
+            </th>
+            <th>파일명</th>
+            <th>소스</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="selected">
+            <td class="cb-col">
+              <label class="cb-wrap">
+                <input type="checkbox" checked />
+                <span class="cb-box"></span>
+              </label>
+            </td>
+            <td>📄 report_2026.pdf</td>
+            <td style="color:#9693a8;">text</td>
+            <td><span class="badge-pending">검수전</span></td>
+          </tr>
+          <tr>
+            <td class="cb-col">
+              <label class="cb-wrap">
+                <input type="checkbox" />
+                <span class="cb-box"></span>
+              </label>
+            </td>
+            <td>📄 contract_A.pdf</td>
+            <td style="color:#9693a8;">ocr</td>
+            <td><span class="badge-reviewing">검수중</span></td>
+          </tr>
+          <tr class="selected">
+            <td class="cb-col">
+              <label class="cb-wrap">
+                <input type="checkbox" checked />
+                <span class="cb-box"></span>
+              </label>
+            </td>
+            <td>📄 invoice_03.pdf</td>
+            <td style="color:#9693a8;">text</td>
+            <td><span class="badge-pending">검수전</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="bulk-bar">
+        <span class="bulk-count">2건</span> 선택됨
+        <button class="cancel-btn">취소</button>
+        <button class="bulk-btn">🗑️ 삭제 대기로 이동</button>
+      </div>
+    </div>
+    <p style="font-size:11px;color:#9693a8;margin-top:8px;">
+      · 헤더 체크박스 = 현재 페이지 전체 선택<br>
+      · 체크박스 클릭과 행 클릭(검수 이동) 분리
+    </p>
+  </div>
+
+  <!-- 삭제 대기 목록 -->
+  <div class="col">
+    <div class="col-label">삭제 대기 목록 (/trash) — admin 뷰</div>
+    <div class="trash-actions">
+      <button class="btn-restore">↩ 복원</button>
+      <button class="btn-delete-final">🗑️ 영구 삭제</button>
+      <span class="admin-only">admin 전용</span>
+    </div>
+    <div class="tframe">
+      <table>
+        <thead>
+          <tr>
+            <th class="cb-col">
+              <label class="cb-wrap">
+                <input type="checkbox" />
+                <span class="cb-box"></span>
+              </label>
+            </th>
+            <th>파일명</th>
+            <th>소스</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="cb-col">
+              <label class="cb-wrap">
+                <input type="checkbox" />
+                <span class="cb-box"></span>
+              </label>
+            </td>
+            <td>📄 report_2026.pdf</td>
+            <td style="color:#9693a8;">text</td>
+            <td><span class="badge-trash">삭제 대기</span></td>
+          </tr>
+          <tr>
+            <td class="cb-col">
+              <label class="cb-wrap">
+                <input type="checkbox" />
+                <span class="cb-box"></span>
+              </label>
+            </td>
+            <td>📄 invoice_03.pdf</td>
+            <td style="color:#9693a8;">text</td>
+            <td><span class="badge-trash">삭제 대기</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:11px;color:#9693a8;margin-top:8px;">
+      · reviewer: 복원만 가능<br>
+      · admin: 복원 + 영구 삭제 가능<br>
+      · 영구 삭제 시 확인 다이얼로그
+    </p>
+  </div>
+
+</div>

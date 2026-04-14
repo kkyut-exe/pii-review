@@ -2,9 +2,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFile } from '../context/FileContext'
+import { useTheme } from '../context/ThemeContext'
 
 export default function LoginPage() {
   const { login } = useFile()
+  const { isDark, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -26,7 +28,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center">
+    <div className="min-h-screen bg-surface flex items-center justify-center px-4 relative overflow-hidden">
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className="absolute top-5 right-5 text-xs text-ink-base border border-stroke bg-card rounded-full px-3 py-2 hover:bg-primary-light transition-colors"
+      >
+        {isDark ? '🌙 다크' : '☀️ 라이트'}
+      </button>
       <div className="bg-card rounded-2xl shadow-md border border-stroke p-8 w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">🏷️</div>

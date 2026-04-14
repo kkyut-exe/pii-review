@@ -53,6 +53,13 @@ def test_upload_log_unauthenticated(client):
     assert resp.status_code == 401
 
 
+def test_upload_log_requires_admin(client, db_session):
+    reviewer = make_user(db_session, username="reviewer", role="reviewer")
+    headers = auth_headers(reviewer.id, reviewer.username, reviewer.role)
+    resp = upload_log(client, headers, SIMPLE_LOG)
+    assert resp.status_code == 403
+
+
 def test_get_upload_history(client, db_session):
     user = make_user(db_session, role="admin")
     headers = auth_headers(user.id, user.username, user.role)

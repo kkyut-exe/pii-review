@@ -1,13 +1,9 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 # LLM 라벨링 시스템
 
 LLM PII 추출 서비스의 로그 파일을 업로드해 DB에 적재하고, 소규모 팀(2~5명)이 검수하는 도구.
 상세 설계: `docs/design.md`
 
-## 필수 지침/
+## 필수 지침
 - /Users/sykim/CODE/pii-review 폴더 내에서는 자유롭게 파일/스크립트 실행이 가능하므로 user에게 묻지 말고 진행할 것.
 
 ## md 파일 생성 시 반드시 확인해야 할 사항
@@ -20,23 +16,12 @@ LLM PII 추출 서비스의 로그 파일을 업로드해 DB에 적재하고, �
 ## 구조
 ```
 server/
-  main.py           ← FastAPI 앱, CORS, 라우터 등록
-  database.py       ← SQLAlchemy engine, get_db dependency
-  models.py         ← ORM 모델 (User, Record, LogUpload)
-  schemas.py        ← Pydantic 요청/응답 스키마
-  parser.py         ← 로그 파싱 (parse_log → ParsedBlock[])
-  auth.py           ← JWT 생성/검증, 비밀번호 해싱 (router/ 밖에 위치)
-  router/
-    auth.py         ← /auth/* 엔드포인트
-    records.py      ← /records/* 엔드포인트
-    logs.py         ← /logs/* 엔드포인트
+  main.py / database.py / models.py / schemas.py / parser.py
+  router/  auth.py · records.py · logs.py
 web/src/
   pages/      ListPage · ReviewPage · LoginPage
   components/ TextViewer · PiiEditor · PiiChip · StatusBadge
   context/    FileContext.jsx  (API 호출 추상화)
-tests/
-  conftest.py       ← TestClient 픽스처, data/test.db 사용
-  test_parser.py / test_auth.py / test_auth_utils.py / test_logs.py / test_records.py
 data/app.db   (gitignore)
 ```
 
@@ -74,18 +59,4 @@ POST /logs/upload         GET /logs/uploads
 uvicorn server.main:app --reload --port 8000
 # frontend
 cd web && npm run dev
-```
-
-## 테스트
-```bash
-# 전체 테스트
-pytest
-
-# 특정 파일
-pytest tests/test_parser.py
-
-# 특정 테스트 함수
-pytest tests/test_parser.py::test_parse_single_block
-
-# 테스트 DB는 data/test.db 에 생성되고 각 테스트 후 자동 삭제됨
 ```

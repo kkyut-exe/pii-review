@@ -1,0 +1,168 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Apple SD Gothic Neo', sans-serif; }
+  .frame { display: flex; height: 420px; border-radius: 12px; overflow: hidden; border: 1.5px solid #e5e4ef; background: #f1f0f6; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 200px; min-width: 200px;
+    background: #ffffff;
+    border-right: 1.5px solid #e5e4ef;
+    display: flex; flex-direction: column;
+    padding: 20px 0;
+  }
+  .sidebar-logo {
+    font-size: 13px; font-weight: 700; color: #1a1825;
+    padding: 0 16px 20px 16px;
+    border-bottom: 1px solid #e5e4ef;
+    margin-bottom: 8px;
+  }
+  .sidebar-logo span { color: #6c63ff; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 16px; font-size: 13px; color: #4b4860;
+    cursor: pointer; border-radius: 0; transition: background .15s;
+    position: relative;
+  }
+  .nav-item:hover { background: #ededf8; }
+  .nav-item.active {
+    background: #ededf8; color: #6c63ff; font-weight: 600;
+  }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 3px; background: #6c63ff; border-radius: 0 2px 2px 0;
+  }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .badge {
+    margin-left: auto; background: #ff4757; color: white;
+    font-size: 10px; font-weight: 700; border-radius: 10px;
+    padding: 1px 6px; min-width: 18px; text-align: center;
+  }
+  .sidebar-bottom {
+    margin-top: auto; padding: 12px 16px 0;
+    border-top: 1px solid #e5e4ef;
+  }
+  .user-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: #9693a8;
+  }
+  .user-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #ededf8; color: #6c63ff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .logout-btn {
+    margin-left: auto; font-size: 11px; color: #9693a8;
+    cursor: pointer; padding: 2px 6px; border-radius: 4px;
+  }
+  .logout-btn:hover { background: #f1f0f6; color: #4b4860; }
+
+  /* Main content area */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .main-header {
+    background: #ffffff; border-bottom: 1.5px solid #e5e4ef;
+    padding: 14px 24px; font-size: 15px; font-weight: 700; color: #1a1825;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .main-body { flex: 1; padding: 20px 24px; overflow: auto; }
+
+  /* Dashboard preview */
+  .stat-cards { display: flex; gap: 12px; margin-bottom: 16px; }
+  .stat-card {
+    flex: 1; background: white; border-radius: 10px;
+    border: 1.5px solid #e5e4ef; padding: 14px 16px;
+  }
+  .stat-label { font-size: 11px; color: #9693a8; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 700; color: #1a1825; }
+  .stat-value.pending { color: #c17d11; }
+  .stat-value.reviewing { color: #2956b2; }
+  .stat-value.reviewed { color: #1e7e34; }
+  .stat-value.trash { color: #ff4757; }
+  .progress-section {
+    background: white; border-radius: 10px; border: 1.5px solid #e5e4ef;
+    padding: 14px 16px;
+  }
+  .progress-label { font-size: 12px; color: #4b4860; margin-bottom: 8px; font-weight: 600; }
+  .progress-bar-wrap { background: #f1f0f6; border-radius: 8px; height: 10px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #6c63ff, #a29bfe); border-radius: 8px; }
+  .progress-meta { font-size: 11px; color: #9693a8; margin-top: 5px; }
+</style>
+
+<h2>섹션 1: 전체 레이아웃 + 사이드바 구조</h2>
+<p class="subtitle">대시보드가 홈(/)이 되고, 검수 목록은 /list로 이동합니다</p>
+
+<div class="mockup" style="margin-top: 20px;">
+  <div class="mockup-header">App Shell — 사이드바 + 대시보드 (홈)</div>
+  <div class="mockup-body" style="padding: 0;">
+    <div class="frame">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-logo">PII <span>Review</span></div>
+        <div class="nav-item active">
+          <span class="nav-icon">📊</span> 대시보드
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">📋</span> 검수 목록
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">🗑️</span> 삭제 대기
+          <span class="badge">3</span>
+        </div>
+        <div class="sidebar-bottom">
+          <div class="user-row">
+            <div class="user-avatar">관</div>
+            <span>admin</span>
+            <span class="logout-btn">로그아웃</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main: Dashboard -->
+      <div class="main">
+        <div class="main-header">📊 대시보드</div>
+        <div class="main-body">
+          <div class="stat-cards">
+            <div class="stat-card">
+              <div class="stat-label">전체</div>
+              <div class="stat-value">142</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">검수전</div>
+              <div class="stat-value pending">38</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">검수중</div>
+              <div class="stat-value reviewing">12</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">완료</div>
+              <div class="stat-value reviewed">89</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">삭제 대기</div>
+              <div class="stat-value trash">3</div>
+            </div>
+          </div>
+          <div class="progress-section">
+            <div class="progress-label">전체 검수 진행률</div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" style="width: 63%;"></div>
+            </div>
+            <div class="progress-meta">89 / 142 완료 · 63%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 16px; padding: 14px 16px; background: #f8f8ff; border-radius: 8px; border: 1px solid #e5e4ef;">
+  <p style="font-size: 13px; color: #4b4860; font-weight: 600; margin-bottom: 8px;">라우트 변경 사항</p>
+  <div style="font-size: 12px; color: #9693a8; line-height: 1.8;">
+    <span style="color: #c17d11;">기존</span> &nbsp;<code style="background:#fff4e6;padding:1px 6px;border-radius:4px;">/</code> → ListPage<br>
+    <span style="color: #1e7e34;">변경</span> &nbsp;<code style="background:#e6f4ea;padding:1px 6px;border-radius:4px;">/</code> → DashboardPage &nbsp;|&nbsp;
+    <code style="background:#e6f4ea;padding:1px 6px;border-radius:4px;">/list</code> → ListPage &nbsp;|&nbsp;
+    <code style="background:#e6f4ea;padding:1px 6px;border-radius:4px;">/trash</code> → DeletionQueuePage<br>
+    <span style="color: #9693a8;">유지</span> &nbsp;<code style="background:#f1f0f6;padding:1px 6px;border-radius:4px;">/review/:id</code> → ReviewPage (사이드바 없음)
+  </div>
+</div>

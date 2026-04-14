@@ -10,7 +10,16 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(python:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Read(//Users/sykim/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/**)",
+      "Bash(bash scripts/start-server.sh --project-dir /Users/sykim/CODE/pii-review)",
+      "Bash(pytest tests/test_records.py::test_patch_status_to_pending_delete_saves_prev_status tests/test_records.py::test_patch_status_invalid -v)",
+      "Bash(.venv/bin/pytest tests/test_records.py::test_patch_status_to_pending_delete_saves_prev_status tests/test_records.py::test_patch_status_invalid -v)",
+      "Bash(.venv/bin/pytest tests/test_records.py -v)",
+      "Bash(.venv/bin/pytest tests/test_records.py::test_bulk_status_to_pending_delete tests/test_records.py::test_bulk_status_invalid_status -v)",
+      "Bash(.venv/bin/pytest tests/test_records.py::test_bulk_delete_admin_only tests/test_records.py::test_delete_single_admin_only -v)",
+      "Bash(.venv/bin/pytest tests/ -v)",
+      "Bash(.venv/bin/pytest tests/ -q)"
     ]
   }
 }

@@ -1,8 +1,12 @@
 // web/src/pages/ListPage.jsx
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useFile } from '../context/FileContext'
 import StatusBadge from '../components/StatusBadge'
+
+function normalizeText(value) {
+  return (value ?? '').normalize('NFC').toLowerCase()
+}
 
 function totalPiiCount(record) {
   const dict = record.reviewed_pii_dict ?? record.pii_dict ?? {}
@@ -23,15 +27,88 @@ function SortIcon({ field, sortField, sortDir }) {
   return <span className="text-primary ml-1 text-xs">{sortDir === 'asc' ? '↑' : '↓'}</span>
 }
 
+function ManualRecordModal({ onClose, onSubmit, submitting }) {
+  const [sourceFilename, setSourceFilename] = useState('')
+  const [docText, setDocText] = useState('')
+  const [piiText, setPiiText] = useState('')
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    onSubmit({ sourceFilename, docText, piiText })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+      <div className="w-full max-w-2xl bg-card rounded-2xl border border-stroke shadow-xl">
+        <div className="px-6 py-4 border-b border-stroke">
+          <h2 className="text-lg font-bold text-ink-strong">단일 레코드 추가</h2>
+          <p className="text-sm text-ink-muted mt-1">원문 텍스트는 필수이고, `pii_dict`는 dict 문자열로 넣어도 자동 파싱됩니다.</p>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <label className="block">
+            <span className="text-sm font-semibold text-ink-base">파일명</span>
+            <input
+              value={sourceFilename}
+              onChange={e => setSourceFilename(e.target.value)}
+              placeholder="비우면 자동 생성"
+              className="mt-1.5 w-full rounded-xl border border-stroke bg-card px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-semibold text-ink-base">원문 텍스트</span>
+            <textarea
+              value={docText}
+              onChange={e => setDocText(e.target.value)}
+              required
+              rows={8}
+              placeholder="검수할 원문 텍스트를 입력하세요"
+              className="mt-1.5 w-full rounded-xl border border-stroke bg-card px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary resize-y"
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-semibold text-ink-base">PII Dict</span>
+            <textarea
+              value={piiText}
+              onChange={e => setPiiText(e.target.value)}
+              rows={5}
+              placeholder="예: {'NAME': ['홍길동'], 'EMAIL': ['test@example.com']}"
+              className="mt-1.5 w-full rounded-xl border border-stroke bg-card px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary resize-y font-mono"
+            />
+          </label>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-sm text-ink-muted px-4 py-2 rounded-lg hover:bg-primary-light transition-colors"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="bg-primary hover:bg-primary-hover text-white text-sm px-4 py-2 rounded-lg font-semibold disabled:opacity-40 transition-colors"
+            >
+              {submitting ? '추가 중...' : '레코드 추가'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 export default function ListPage() {
-  const { currentUser, records, exportReviewed, uploadLog, logout, bulkUpdateStatus } = useFile()
-  const [filter, setFilter] = useState('all')
+  const { currentUser, records, exportReviewed, uploadLog, logout, bulkUpdateStatus, createManualRecord } = useFile()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [filter, setFilter] = useState(searchParams.get('filter') ?? 'all')
   const [search, setSearch] = useState('')
   const [sortField, setSortField] = useState('source_filename')
   const [sortDir, setSortDir] = useState('asc')
   const [page, setPage] = useState(1)
   const [uploading, setUploading] = useState(false)
   const [uploadMsg, setUploadMsg] = useState(null)
+  const [manualModalOpen, setManualModalOpen] = useState(false)
+  const [manualSubmitting, setManualSubmitting] = useState(false)
   const [selectedIds, setSelectedIds] = useState(new Set())
   const fileInputRef = useRef(null)
   const navigate = useNavigate()
@@ -44,8 +121,8 @@ export default function ListPage() {
     let result = records.filter(r => r.status !== 'pending_delete')
     if (filter !== 'all') result = result.filter(r => r.status === filter)
     if (search.trim()) {
-      const q = search.trim().toLowerCase()
-      result = result.filter(r => (r.source_filename ?? '').toLowerCase().includes(q))
+      const q = normalizeText(search.trim())
+      result = result.filter(r => normalizeText(r.source_filename).includes(q))
     }
     result = [...result].sort((a, b) => {
       let av, bv
@@ -82,6 +159,7 @@ export default function ListPage() {
 
   function handleFilterChange(key) {
     setFilter(key)
+    setSearchParams(key !== 'all' ? { filter: key } : {}, { replace: true })
     setPage(1)
   }
 
@@ -135,9 +213,26 @@ export default function ListPage() {
     }
   }
 
+  async function handleCreateManualRecord({ sourceFilename, docText, piiText }) {
+    setManualSubmitting(true)
+    try {
+      const created = await createManualRecord({
+        sourceFilename,
+        docText,
+        piiDict: piiText,
+      })
+      setManualModalOpen(false)
+      navigate(`/review/${created.id}`)
+    } catch (err) {
+      alert(`추가 실패: ${err.message}`)
+    } finally {
+      setManualSubmitting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-surface">
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8">
 
         {/* 헤더 */}
         <div className="flex items-start justify-between mb-6">
@@ -161,6 +256,12 @@ export default function ListPage() {
             )}
             {currentUser?.role === 'admin' && (
               <>
+                <button
+                  onClick={() => setManualModalOpen(true)}
+                  className="text-sm text-ink-base border border-stroke px-3 py-1.5 rounded-lg hover:bg-primary-light transition-colors"
+                >
+                  + 단일 레코드 추가
+                </button>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -359,6 +460,13 @@ export default function ListPage() {
         )}
 
       </div>
+      {manualModalOpen && (
+        <ManualRecordModal
+          onClose={() => setManualModalOpen(false)}
+          onSubmit={handleCreateManualRecord}
+          submitting={manualSubmitting}
+        />
+      )}
     </div>
   )
 }

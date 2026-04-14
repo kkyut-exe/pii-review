@@ -1,8 +1,13 @@
-# tests/conftest.py
 import pytest
+import os
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key")
+os.environ.setdefault("ACCESS_TOKEN_EXPIRE_MINUTES", "480")
+os.environ.setdefault("INITIAL_ADMIN_USERNAME", "test-admin")
+os.environ.setdefault("INITIAL_ADMIN_PASSWORD", "test-password")
 
 from server.database import Base, get_db
 from server.main import app

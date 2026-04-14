@@ -7,6 +7,9 @@ import ReviewPage from './pages/ReviewPage'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import DeletionQueuePage from './pages/DeletionQueuePage'
+import DatasetsPage from './pages/DatasetsPage'
+import DatasetRegisterPage from './pages/DatasetRegisterPage'
+import { ThemeProvider } from './context/ThemeContext'
 
 function RequireAuth({ children }) {
   const { currentUser } = useFile()
@@ -27,14 +30,19 @@ const router = createHashRouter([
       { index: true, element: <DashboardPage /> },
       { path: 'list', element: <ListPage /> },
       { path: 'trash', element: <DeletionQueuePage /> },
+      { path: 'datasets', element: <DatasetsPage /> },
+      { path: 'datasets/register', element: <DatasetRegisterPage /> },
+      { path: 'datasets/version/:versionId', element: <DatasetsPage /> },
     ],
   },
 ])
 
 export default function App() {
   return (
-    <FileProvider>
-      <RouterProvider router={router} />
-    </FileProvider>
+    <ThemeProvider>
+      <FileProvider>
+        <RouterProvider router={router} />
+      </FileProvider>
+    </ThemeProvider>
   )
 }

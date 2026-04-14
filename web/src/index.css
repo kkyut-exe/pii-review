@@ -2,12 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+  --color-surface: 241 240 246;
+  --color-card: 255 255 255;
+  --color-stroke: 229 228 239;
+  --color-primary: 108 99 255;
+  --color-primary-hover: 87 79 214;
+  --color-primary-light: 237 237 248;
+  --color-primary-light-hover: 221 218 239;
+  --color-ink-strong: 26 24 37;
+  --color-ink-base: 75 72 96;
+  --color-ink-muted: 150 147 168;
+  --color-status-pending-bg: 255 244 230;
+  --color-status-pending-fg: 193 125 17;
+  --color-status-reviewing-bg: 232 240 254;
+  --color-status-reviewing-fg: 41 86 178;
+  --color-status-reviewed-bg: 230 244 234;
+  --color-status-reviewed-fg: 30 126 52;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-surface: 17 20 28;
+  --color-card: 24 28 39;
+  --color-stroke: 54 61 78;
+  --color-primary: 138 130 255;
+  --color-primary-hover: 119 110 244;
+  --color-primary-light: 43 47 67;
+  --color-primary-light-hover: 52 58 81;
+  --color-ink-strong: 238 241 248;
+  --color-ink-base: 191 198 214;
+  --color-ink-muted: 136 144 166;
+  --color-status-pending-bg: 73 52 16;
+  --color-status-pending-fg: 245 192 91;
+  --color-status-reviewing-bg: 27 50 88;
+  --color-status-reviewing-fg: 138 184 255;
+  --color-status-reviewed-bg: 20 67 42;
+  --color-status-reviewed-fg: 129 222 160;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  background: rgb(var(--color-surface));
+  color: rgb(var(--color-ink-base));
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
 @font-face {
   font-family: 'Freesentation';
   src: url('/fonts/Freesentation-4Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
+}
+
+* {
+  scrollbar-color: rgb(var(--color-ink-muted)) rgb(var(--color-surface));
 }
 @font-face {
   font-family: 'Freesentation';

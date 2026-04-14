@@ -77,7 +77,7 @@ export default function DeletionQueuePage() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8">
 
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-6">
