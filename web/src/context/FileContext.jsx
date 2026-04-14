@@ -101,6 +101,22 @@ export function FileProvider({ children }) {
     return result
   }
 
+  async function bulkUpdateStatus(ids, newStatus) {
+    await apiFetch('/records/bulk-status', {
+      method: 'POST',
+      body: JSON.stringify({ ids, status: newStatus }),
+    })
+    await fetchRecords()
+  }
+
+  async function bulkDelete(ids) {
+    await apiFetch('/records/bulk', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids }),
+    })
+    await fetchRecords()
+  }
+
   async function exportReviewed() {
     const token = localStorage.getItem('token')
     const res = await fetch(`${API_BASE}/records/export`, {
@@ -128,6 +144,8 @@ export function FileProvider({ children }) {
       uploadLog,
       exportReviewed,
       fetchRecords,
+      bulkUpdateStatus,
+      bulkDelete,
     }}>
       {children}
     </FileContext.Provider>
