@@ -127,6 +127,38 @@ def test_patch_status_invalid(client, db_session):
     assert resp.status_code == 422
 
 
+def test_bulk_status_to_pending_delete(client, db_session):
+    user = make_user(db_session)
+    r1 = make_record(db_session, path="/tmp/a/texts_chunked.json", status="pending")
+    r2 = make_record(db_session, path="/tmp/b/texts_chunked.json", status="reviewing")
+    headers = auth_headers(user.id, user.username, user.role)
+
+    resp = client.post("/records/bulk-status",
+                       json={"ids": [r1.id, r2.id], "status": "pending_delete"},
+                       headers=headers)
+    assert resp.status_code == 200
+    assert resp.json()["updated"] == 2
+
+    # prev_status 저장 확인
+    resp1 = client.get(f"/records/{r1.id}", headers=headers)
+    assert resp1.json()["status"] == "pending_delete"
+    assert resp1.json()["prev_status"] == "pending"
+
+    resp2 = client.get(f"/records/{r2.id}", headers=headers)
+    assert resp2.json()["prev_status"] == "reviewing"
+
+
+def test_bulk_status_invalid_status(client, db_session):
+    user = make_user(db_session)
+    record = make_record(db_session)
+    headers = auth_headers(user.id, user.username, user.role)
+
+    resp = client.post("/records/bulk-status",
+                       json={"ids": [record.id], "status": "bad"},
+                       headers=headers)
+    assert resp.status_code == 422
+
+
 def test_export_reviewed_only(client, db_session):
     user = make_user(db_session)
     make_record(db_session, path="/tmp/a/texts_chunked.json", status="reviewed")

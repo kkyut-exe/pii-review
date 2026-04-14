@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from server.database import get_db
 from server.models import Record, User
-from server.schemas import RecordOut, RecordListOut, StatusUpdate, ReviewUpdate
+from server.schemas import RecordOut, RecordListOut, StatusUpdate, ReviewUpdate, BulkStatusUpdate, BulkDelete
 from server.router.auth import get_current_user
 
 router = APIRouter()
@@ -20,6 +20,25 @@ def _to_record_out(record: Record) -> RecordOut:
     if record.reviewer:
         out.reviewer_username = record.reviewer.username
     return out
+
+
+@router.post("/bulk-status")
+def bulk_update_status(
+    body: BulkStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if body.status not in VALID_STATUSES:
+        raise HTTPException(status_code=422, detail=f"Invalid status: {body.status}")
+
+    records = db.query(Record).filter(Record.id.in_(body.ids)).all()
+    for record in records:
+        if body.status == "pending_delete":
+            record.prev_status = record.status
+        record.status = body.status
+
+    db.commit()
+    return {"updated": len(records)}
 
 
 # IMPORTANT: /export 라우트를 /{id} 보다 먼저 정의해야 함
