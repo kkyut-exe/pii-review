@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/trash', end: false, icon: '🗑️', label: '삭제 대기' },
   { to: '/datasets', end: false, icon: '🗂️', label: '데이터셋 목록' },
   { to: '/datasets/register', end: false, icon: '➕', label: '데이터셋 등록' },
+  { to: '/evals', end: false, icon: '🧪', label: 'LLM 평가' },
 ]
 
 const KIND_LABELS = {

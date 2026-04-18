@@ -1,7 +1,7 @@
 # server/models.py
 import uuid
 from datetime import datetime, UTC
-from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text, JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from server.database import Base
 
@@ -102,3 +102,53 @@ class DatasetItem(Base):
 
     dataset_version = relationship("DatasetVersion", back_populates="items")
     matched_record = relationship("Record", foreign_keys=[matched_record_id])
+
+
+class EvalRun(Base):
+    __tablename__ = "eval_runs"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, nullable=False)
+    model_name = Column(String, nullable=False)
+    server_url = Column(String, nullable=False)
+    chunk_chars = Column(Integer, nullable=True)   # None = 청킹 안 함
+    overlap = Column(Integer, nullable=False, default=0)
+    golden_source = Column(String, nullable=False)  # 'db' | 'upload'
+    golden_set_hash = Column(String, nullable=False)
+    artifact_dir = Column(String, nullable=False)
+    status = Column(String, nullable=False, default="pending")  # pending|running|done|failed
+    progress = Column(Float, nullable=False, default=0.0)
+    error_msg = Column(Text, nullable=True)
+    total_docs = Column(Integer, nullable=False, default=0)
+    matched_docs = Column(Integer, nullable=False, default=0)
+    started_at = Column(DateTime, nullable=True)
+    finished_at = Column(DateTime, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+
+    creator = relationship("User", foreign_keys=[created_by])
+    metrics = relationship(
+        "EvalMetric",
+        back_populates="run",
+        cascade="all, delete-orphan",
+    )
+
+
+class EvalMetric(Base):
+    __tablename__ = "eval_metrics"
+    __table_args__ = (
+        UniqueConstraint("run_id", "scope", "key", name="uq_eval_metric_run_scope_key"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    run_id = Column(String, ForeignKey("eval_runs.id", ondelete="CASCADE"), nullable=False)
+    scope = Column(String, nullable=False)  # 'overall' | 'field'
+    key = Column(String, nullable=False)    # 'ALL' | 'NAME' | 'ADDRESS' | ...
+    tp = Column(Integer, nullable=False, default=0)
+    fp = Column(Integer, nullable=False, default=0)
+    fn = Column(Integer, nullable=False, default=0)
+    precision = Column(Float, nullable=False, default=0.0)
+    recall = Column(Float, nullable=False, default=0.0)
+    f1 = Column(Float, nullable=False, default=0.0)
+
+    run = relationship("EvalRun", back_populates="metrics")

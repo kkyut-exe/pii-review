@@ -49,6 +49,8 @@ html, body, #root {
 body {
   background: rgb(var(--color-surface));
   color: rgb(var(--color-ink-base));
+  font-family: 'Freesentation', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-feature-settings: 'tnum' on;
   transition: background-color 160ms ease, color 160ms ease;
 }
 

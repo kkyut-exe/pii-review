@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from server.database import engine, Base
-from server.router import auth, records, logs, datasets
+from server.router import auth, records, logs, datasets, evals
 
 # DB 테이블 자동 생성
 Base.metadata.create_all(bind=engine)
@@ -26,6 +26,7 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(records.router, prefix="/records", tags=["records"])
 app.include_router(logs.router, prefix="/logs", tags=["logs"])
 app.include_router(datasets.router, prefix="/datasets", tags=["datasets"])
+app.include_router(evals.router, prefix="/evals", tags=["evals"])
 
 
 @app.get("/health")

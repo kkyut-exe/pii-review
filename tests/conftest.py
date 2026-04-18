@@ -31,9 +31,17 @@ def client():
             db.close()
 
     app.dependency_overrides[get_db] = override_db
+
+    # eval_runner 가 BackgroundTasks 안에서 자체 세션을 만들 때
+    # production SessionLocal 대신 테스트 DB 를 쓰도록 주입.
+    from server import eval_runner
+    saved_factory = eval_runner._session_factory
+    eval_runner._session_factory = TestSession
+
     with TestClient(app) as c:
         yield c
 
+    eval_runner._session_factory = saved_factory
     Base.metadata.drop_all(bind=engine)
     app.dependency_overrides.clear()
 

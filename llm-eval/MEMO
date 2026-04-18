@@ -1,0 +1,10 @@
+{
+    "messages": [
+        {
+            "role": "user",
+            "content": "개인"
+        }
+    ],
+    "model": "lora_extract",
+    "stream": false
+}

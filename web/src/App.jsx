@@ -9,6 +9,9 @@ import DashboardPage from './pages/DashboardPage'
 import DeletionQueuePage from './pages/DeletionQueuePage'
 import DatasetsPage from './pages/DatasetsPage'
 import DatasetRegisterPage from './pages/DatasetRegisterPage'
+import EvalNewPage from './pages/EvalNewPage'
+import EvalDetailPage from './pages/EvalDetailPage'
+import EvalLayout, { EvalEmptyState } from './components/EvalLayout'
 import { ThemeProvider } from './context/ThemeContext'
 
 function RequireAuth({ children }) {
@@ -33,6 +36,15 @@ const router = createHashRouter([
       { path: 'datasets', element: <DatasetsPage /> },
       { path: 'datasets/register', element: <DatasetRegisterPage /> },
       { path: 'datasets/version/:versionId', element: <DatasetsPage /> },
+      { path: 'evals/new', element: <EvalNewPage /> },
+      {
+        path: 'evals',
+        element: <EvalLayout />,
+        children: [
+          { index: true, element: <EvalEmptyState /> },
+          { path: ':id', element: <EvalDetailPage /> },
+        ],
+      },
     ],
   },
 ])
